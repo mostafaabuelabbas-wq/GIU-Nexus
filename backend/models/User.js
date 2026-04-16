@@ -31,6 +31,11 @@ const userSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    role: {
+        type: String,
+        enum: ["jobSeeker", "recruiter", "admin"],
+        default: "jobSeeker"
+    },    
 
 });
 
