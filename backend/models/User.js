@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema({
         enum: ["pending", "approved", "rejected"],
         default: "pending"
     },
+    role: {
+        type: String,
+        enum: ["jobSeeker", "recruiter", "admin"],
+        default: "jobSeeker"
+    },    
 
     createdAt: {
         type: Date,
