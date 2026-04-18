@@ -57,10 +57,26 @@ const jobPostSchema = new mongoose.Schema(
       required: [true, "Total slots is required"],
       min: [1, "There must be at least one slot"],
     },
+    status: {
+      type: String,
+      enum: {
+        values: ["open", "closed"],
+        message: "Status must be one of: open, closed",
+      },
+      default: "open",
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "Job post must be linked to a recruiter"],
+    },
   },
   {
     timestamps: true,
   }
 );
 
+jobPostSchema.index({ status: 1, category: 1 }); 
+jobPostSchema.index({ createdBy: 1 });           
+jobPostSchema.index({ createdAt: -1 });         
 module.exports = mongoose.model("JobPost", jobPostSchema);
