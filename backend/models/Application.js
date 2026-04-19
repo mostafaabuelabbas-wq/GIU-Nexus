@@ -19,6 +19,18 @@ const applicationSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+
+    status: {
+      type: String,
+      enum: {
+        values: ["pending", "shortlisted", "rejected"],
+        message: "Status must be one of: pending, shortlisted, rejected",
+      },
+      default: "pending",
+    },
+  },
+  {
+    timestamps: { createdAt: "appliedAt", updatedAt: true },
   }
 );
 
