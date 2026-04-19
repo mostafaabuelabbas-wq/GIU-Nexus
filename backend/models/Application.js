@@ -34,4 +34,13 @@ const applicationSchema = new mongoose.Schema(
   }
 );
 
+// 🔥 Prevent duplicate applications
+applicationSchema.index({ user: 1, job: 1 }, { unique: true });
+
+// 🚀 Recruiter dashboard optimization
+applicationSchema.index({ job: 1, status: 1 });
+
+// 🚀 Student dashboard optimization
+applicationSchema.index({ user: 1, appliedAt: -1 });
+
 module.exports = mongoose.model("Application", applicationSchema);
