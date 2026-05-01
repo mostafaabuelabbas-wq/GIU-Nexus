@@ -11,10 +11,13 @@ const signToken = (id, role) => {
 
 // ─── REGISTER ────────────────────────────────────────────────────
 exports.register = async (req, res, next) => {
-    
+
     try {
         const { name, email, password, role } = req.body;
-        
+
+        if (!name || !email || !password || !role) {
+            return res.status(400).json({ success: false, message: "Please provide name, email, password, and role" });
+        }
 
         const existingUser = await User.findOne({ email: email.toLowerCase() });
 
@@ -56,11 +59,7 @@ if (existingUser) {
         
 
     } catch (error) {
-        
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        next(error);
     }
 };
 
@@ -109,9 +108,6 @@ exports.login = async (req, res, next) => {
         });
 
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        next(error);
     }
 };
