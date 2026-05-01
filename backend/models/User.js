@@ -169,11 +169,10 @@ userSchema.index({ role: 1, status: 1 }); // Admin Panel: "show pending recruite
 userSchema.index({ role: 1, isActive: 1 }); // Filter active users by role
 
 // ─── Hash password before saving ─────────────────────────────────────────────
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 // ─── Compare password on login (used in Task 2 auth) ─────────────────────────
