@@ -96,17 +96,29 @@ const deleteUser = async (req, res, next) => {
 // @access  Admin only
 const getAdminStats = async (req, res, next) => {
     try {
-        const usersByRole = await User.aggregate([
+        const usersByRoleRaw = await User.aggregate([
             { $group: { _id: "$role", count: { $sum: 1 } } },
         ]);
+        const usersByRole = usersByRoleRaw.reduce((acc, { _id, count }) => {
+            if (_id) acc[_id] = count;
+            return acc;
+        }, {});
 
-        const jobsByStatus = await JobPost.aggregate([
+        const jobsByStatusRaw = await JobPost.aggregate([
             { $group: { _id: "$status", count: { $sum: 1 } } },
         ]);
+        const jobsByStatus = jobsByStatusRaw.reduce((acc, { _id, count }) => {
+            if (_id) acc[_id] = count;
+            return acc;
+        }, {});
 
-        const appsByStatus = await Application.aggregate([
+        const appsByStatusRaw = await Application.aggregate([
             { $group: { _id: "$status", count: { $sum: 1 } } },
         ]);
+        const appsByStatus = appsByStatusRaw.reduce((acc, { _id, count }) => {
+            if (_id) acc[_id] = count;
+            return acc;
+        }, {});
 
         const topJobs = await Application.aggregate([
             { $group: { _id: "$job", applicationCount: { $sum: 1 } } },

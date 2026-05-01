@@ -54,8 +54,8 @@ const jobPostSchema = new mongoose.Schema(
     },
     totalSlots: {
       type: Number,
-      required: [true, "Total slots is required"],
       min: [1, "There must be at least one slot"],
+      default: 1,
     },
     status: {
       type: String,
