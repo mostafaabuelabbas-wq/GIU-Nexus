@@ -18,7 +18,7 @@ app.use("/api/v1/users", require("./routes/userRoutes"));
 app.use("/api/v1/admin", require("./routes/adminRoutes"));
 // app.use("/api/v1/profile",      require("./routes/profileRoutes"));
 app.use("/api/v1/jobs", require("./routes/jobRoutes"));
-// app.use("/api/v1/applications", require("./routes/applicationRoutes"));
+app.use("/api/v1/applications", require("./routes/applicationRoutes"));
 
 // Test route
 app.get("/", (req, res) => {
