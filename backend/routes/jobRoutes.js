@@ -3,15 +3,78 @@ const express = require('express');
 const router = express.Router();
 
 const { protect, authorize } = require('../middleware/auth');
-const { getAllJobs, getJobById, updateJob, deleteJob } = require('../controllers/jobController');
+
+const {
+  getAllJobs,
+  getJobById,
+  updateJob,
+  deleteJob,
+  toggleSaveJob,
+  applyToJob,
+  getMyJobs,
+  getSavedJobs
+} = require('../controllers/jobController');
+
 
 // Public routes
 router.get('/', getAllJobs);
-router.get('/:jobId/applicants', protect, authorize('recruiter'), getJobApplicants);
+
+
+// Protected routes BEFORE /:id
+router.get(
+  '/my-jobs',
+  protect,
+  authorize('recruiter'),
+  getMyJobs
+);
+
+router.get(
+  '/saved',
+  protect,
+  authorize('jobSeeker'),
+  getSavedJobs
+);
+
+router.get(
+  '/:jobId/applicants',
+  protect,
+  authorize('recruiter'),
+  getJobApplicants
+);
+
+router.post(
+  '/:id/save',
+  protect,
+  authorize('jobSeeker'),
+  toggleSaveJob
+);
+
+router.post(
+  '/:jobId/apply',
+  protect,
+  authorize('jobSeeker'),
+  applyToJob
+);
+
+
+// Public single job route
 router.get('/:id', getJobById);
 
-// Protected routes
-router.patch('/:id', protect, authorize('recruiter'), updateJob);
-router.delete('/:id', protect, authorize('recruiter', 'admin'), deleteJob);
+
+// Protected update/delete routes
+router.patch(
+  '/:id',
+  protect,
+  authorize('recruiter'),
+  updateJob
+);
+
+router.delete(
+  '/:id',
+  protect,
+  authorize('recruiter', 'admin'),
+  deleteJob
+);
+
 
 module.exports = router;
