@@ -1,3 +1,4 @@
+const { getJobApplicants } = require('../controllers/applicationController');
 const express = require('express');
 const router = express.Router();
 
@@ -6,6 +7,7 @@ const { getAllJobs, getJobById, updateJob, deleteJob } = require('../controllers
 
 // Public routes
 router.get('/', getAllJobs);
+router.get('/:jobId/applicants', protect, authorize('recruiter'), getJobApplicants);
 router.get('/:id', getJobById);
 
 // Protected routes
