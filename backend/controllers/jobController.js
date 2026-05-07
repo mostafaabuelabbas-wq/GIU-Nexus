@@ -1,4 +1,6 @@
 const JobPost = require('../models/JobPost');
+const Application = require('../models/Application');
+const User = require('../models/User');
 
 // GET /api/v1/jobs — Public
 exports.getAllJobs = async (req, res, next) => {
@@ -86,6 +88,102 @@ exports.deleteJob = async (req, res, next) => {
 
     await JobPost.findByIdAndDelete(req.params.id);
     res.status(200).json({ success: true, message: 'Job deleted' });
+  } catch (err) {
+    next(err);
+  }
+};
+// POST /api/v1/jobs/:id/save — Job Seeker only
+exports.toggleSaveJob = async (req, res, next) => {
+  try {
+    const job = await JobPost.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    if (job.status !== 'open') {
+      return res.status(400).json({ success: false, message: 'Cannot save a closed job' });
+    }
+
+    const user = await User.findById(req.user._id);
+    const alreadySaved = user.savedJobs.some(
+      savedJobId => savedJobId.toString() === job._id.toString()
+    );
+
+    if (alreadySaved) {
+      user.savedJobs = user.savedJobs.filter(
+        savedJobId => savedJobId.toString() !== job._id.toString()
+      );
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Job removed from saved',
+        saved: false
+      });
+    }
+
+    user.savedJobs.push(job._id);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Job saved',
+      saved: true
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/v1/jobs/:jobId/apply — Job Seeker only
+exports.applyToJob = async (req, res, next) => {
+  try {
+    const { jobId } = req.params;
+    const { coverLetter } = req.body;
+
+    const job = await JobPost.findById(jobId);
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    const application = await Application.create({
+      user: req.user._id,
+      job: jobId,
+      coverLetter
+    });
+
+    res.status(201).json({ success: true, application });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already applied to this job'
+      });
+    }
+
+    next(err);
+  }
+};
+
+// GET /api/v1/jobs/my-jobs — Recruiter only
+exports.getMyJobs = async (req, res, next) => {
+  try {
+    const jobs = await JobPost.find({ createdBy: req.user._id });
+
+    res.status(200).json({ success: true, jobs });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/v1/jobs/saved — Job Seeker only
+exports.getSavedJobs = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).populate('savedJobs');
+
+    res.status(200).json({ success: true, jobs: user.savedJobs });
   } catch (err) {
     next(err);
   }
