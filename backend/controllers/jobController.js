@@ -29,7 +29,7 @@ exports.createJob = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message:
-          "Your account must be approved before posting jobs.",
+          "Your account is pending approval. Wait for admin approval before posting jobs.",
       });
     }
 
@@ -258,6 +258,13 @@ exports.applyToJob = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Job not found" });
     }
 
+    if (job.status !== "open") {
+      return res.status(400).json({
+        success: false,
+        message: "This job is no longer accepting applications",
+      });
+    }
+
     const resumeSnapshot = req.user.resumeUrl || null;
 
     let matchScore = null;
@@ -275,13 +282,6 @@ exports.applyToJob = async (req, res, next) => {
       }
     } catch (err) {
       console.error("Match score computation failed:", err.message);
-    }
-
-    if (job.status !== "open") {
-      return res.status(400).json({
-        success: false,
-        message: "This job is no longer accepting applications",
-      });
     }
 
     const application = await Application.create({
