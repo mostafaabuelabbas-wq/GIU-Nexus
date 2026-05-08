@@ -68,6 +68,9 @@ exports.login = async (req, res, next) => {
             return res.status(401).json({ success: false, message: "Invalid email or password" });
         }
 
+        user.lastLogin = new Date();
+        await user.save({ validateBeforeSave: false });
+
         const token = signToken(user._id, user.role);
 
         res.status(200).json({
@@ -80,7 +83,7 @@ exports.login = async (req, res, next) => {
                 role: user.role,
                 status: user.status,
                 profilePicture: user.profilePicture,
-                skills: user.extractedSkills
+                skills: user.skills
             }
         });
 

@@ -126,11 +126,6 @@ const jobPostSchema = new mongoose.Schema(
       min: 0,
     },
 
-    // Soft delete — keep job data for analytics and application history
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
   },
   {
     timestamps: true,
