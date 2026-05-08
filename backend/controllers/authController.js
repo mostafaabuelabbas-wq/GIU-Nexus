@@ -2,10 +2,11 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../services/emailService");
+const blacklistedTokens = require("../middleware/tokenBlacklist");
 
 const signToken = (id, role) => {
     return jwt.sign(
-        { _id: id, role: role },
+        { _id: id, role: role, jti: crypto.randomUUID() },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRE }
     );
@@ -16,9 +17,9 @@ exports.register = async (req, res, next) => {
     try {
         const { name, email, password, role } = req.body;
         if (role === "admin") {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Cannot register as admin" 
+            return res.status(400).json({
+                success: false,
+                message: "Cannot register as admin"
             });
         }
         if (!name || !email || !password || !role) {
@@ -103,39 +104,105 @@ exports.login = async (req, res, next) => {
 
 // ─── LOGOUT ────────────────────────────────────────────────────────
 exports.logout = async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.split(" ")[1];
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            if (decoded && decoded.jti) {
+                blacklistedTokens.add(decoded.jti);
+            }
+        } catch (err) {
+            // Token already invalid — nothing to blacklist
+        }
+    }
     res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
 // ─── FORGOT PASSWORD ──────────────────────────────────────────────
+// Step 1: User provides email → receives a 6-digit OTP via email
 exports.forgotPassword = async (req, res, next) => {
     try {
         const user = await User.findOne({ email: req.body.email });
 
         // Always return 200 — never reveal if email exists or not
         if (!user) {
-            return res.status(200).json({ success: true, message: "Password reset email sent" });
+            return res.status(200).json({ success: true, message: "If that email is registered, an OTP has been sent" });
         }
 
+        // Generate a 6-digit OTP
+        const otpRaw = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpHashed = crypto.createHash("sha256").update(otpRaw).digest("hex");
+
+        // Also prepare the reset token (will only be revealed after OTP verification)
         const rawToken = crypto.randomBytes(32).toString("hex");
-        const hashed = crypto.createHash("sha256").update(rawToken).digest("hex");
+        const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
 
-        user.passwordResetToken = hashed;
-        user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+        user.otp = otpHashed;
+        user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+        user.passwordResetToken = hashedToken;
+        user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
         await user.save({ validateBeforeSave: false });
-
-        const resetLink = `http://localhost:5000/api/v1/auth/reset-password/${rawToken}`;
 
         try {
             await sendEmail({
                 to: user.email,
-                subject: "Password Reset Request",
-                text: `You requested a password reset. Click the link below to reset your password (expires in 10 minutes):\n\n${resetLink}\n\nIf you did not request this, ignore this email.`
+                subject: "Your Password Reset OTP",
+                text: `Your OTP for password reset is: ${otpRaw}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, ignore this email.`
             });
         } catch (emailErr) {
-            console.error("Password reset email failed:", emailErr.message);
+            console.error("OTP email failed:", emailErr.message);
         }
 
-        return res.status(200).json({ success: true, message: "Password reset email sent" });
+        return res.status(200).json({ success: true, message: "If that email is registered, an OTP has been sent" });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── VERIFY OTP ───────────────────────────────────────────────────
+// Step 2: User provides email + OTP → receives the reset token
+exports.verifyOtp = async (req, res, next) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({ success: false, message: "Please provide email and OTP" });
+        }
+
+        const otpHashed = crypto.createHash("sha256").update(otp).digest("hex");
+
+        const user = await User.findOne({
+            email: email.toLowerCase(),
+            otp: otpHashed,
+            otpExpires: { $gt: Date.now() }
+        }).select("+otp +otpExpires +passwordResetToken");
+
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+
+        // OTP is valid — clear it so it can't be reused
+        const resetToken = user.passwordResetToken;
+        user.otp = null;
+        user.otpExpires = null;
+        await user.save({ validateBeforeSave: false });
+
+        // Return the reset token so the client can call /reset-password/:token
+        // We need the RAW token, but we only stored the hash.
+        // So instead, generate a fresh one now that OTP is verified:
+        const rawToken = crypto.randomBytes(32).toString("hex");
+        const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+        user.passwordResetToken = hashedToken;
+        user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 more minutes
+        await user.save({ validateBeforeSave: false });
+
+        res.status(200).json({
+            success: true,
+            message: "OTP verified successfully",
+            resetToken: rawToken
+        });
 
     } catch (error) {
         next(error);
@@ -143,6 +210,7 @@ exports.forgotPassword = async (req, res, next) => {
 };
 
 // ─── RESET PASSWORD ───────────────────────────────────────────────
+// Step 3: User provides new password + the reset token from Step 2
 exports.resetPassword = async (req, res, next) => {
     try {
         const hashed = crypto.createHash("sha256").update(req.params.token).digest("hex");
