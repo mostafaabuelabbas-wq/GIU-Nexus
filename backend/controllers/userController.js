@@ -143,9 +143,26 @@ const getAdminStats = async (req, res, next) => {
             },
         ]);
 
+        const fourWeeksAgo = new Date();
+        fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+
+        const applicationsPerWeek = await Application.aggregate([
+            { $match: { appliedAt: { $gte: fourWeeksAgo } } },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$appliedAt", timezone: "UTC", startOfWeek: "monday" }
+                    },
+                    count: { $sum: 1 },
+                },
+            },
+            { $sort: { _id: 1 } },
+            { $project: { _id: 0, week: "$_id", count: 1 } },
+        ]);
+
         res.status(200).json({
             success: true,
-            stats: { usersByRole, jobsByStatus, appsByStatus, topJobs },
+            stats: { usersByRole, jobsByStatus, appsByStatus, topJobs, applicationsPerWeek },
         });
     } catch (err) {
         next(err);
