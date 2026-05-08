@@ -44,7 +44,69 @@ exports.updateApplicationStatus = async (req, res, next) => {
             });
         }
 
+        const previousStatus = application.status;
         application.status = status;
+        application.reviewedBy = req.user._id;
+        application.statusChangedAt = new Date();
+        await application.save();
+
+        // When newly shortlisted, increment filledSlots and auto-close job if full
+        if (status === 'shortlisted' && previousStatus !== 'shortlisted') {
+            const job = application.job;
+            job.filledSlots = (job.filledSlots || 0) + 1;
+            if (job.filledSlots >= job.totalSlots) {
+                job.status = 'closed';
+            }
+            await job.save();
+        }
+
+        // When un-shortlisting (was shortlisted, now changed), decrement filledSlots
+        if (previousStatus === 'shortlisted' && status !== 'shortlisted') {
+            const job = application.job;
+            job.filledSlots = Math.max(0, (job.filledSlots || 0) - 1);
+            if (job.status === 'closed' && job.filledSlots < job.totalSlots) {
+                job.status = 'open';
+            }
+            await job.save();
+        }
+
+        res.status(200).json({
+            success: true,
+            application
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateApplicationNotes = async (req, res, next) => {
+    try {
+        const { recruiterNotes } = req.body;
+
+        if (recruiterNotes === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: 'recruiterNotes field is required'
+            });
+        }
+
+        const application = await Application.findById(req.params.id).populate('job');
+
+        if (!application) {
+            return res.status(404).json({
+                success: false,
+                message: 'Application not found'
+            });
+        }
+
+        if (application.job.createdBy.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorised to add notes to this application'
+            });
+        }
+
+        application.recruiterNotes = recruiterNotes;
         await application.save();
 
         res.status(200).json({

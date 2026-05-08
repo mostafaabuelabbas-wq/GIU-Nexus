@@ -23,11 +23,23 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const updates = {};
 
-    // Allow updating ONLY specific fields and permit empty strings using undefined checks
-    if (req.body.name !== undefined) updates.name = req.body.name;
-    if (req.body.bio !== undefined) updates.bio = req.body.bio;
-    if (req.body.profilePicture !== undefined)
-      updates.profilePicture = req.body.profilePicture;
+    const editableFields = [
+      "name",
+      "bio",
+      "profilePicture",
+      "phone",
+      "university",
+      "major",
+      "resumeUrl",
+      "linkedinUrl",
+      "githubUrl",
+      "portfolioUrl",
+      "studentId",
+    ];
+
+    editableFields.forEach((field) => {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    });
 
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
       new: true,

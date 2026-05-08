@@ -24,6 +24,9 @@ exports.createJob = async (req, res, next) => {
       type,
       salary,
       totalSlots,
+      experienceLevel,
+      workMode,
+      deadline,
     } = req.body;
 
     // AI Classification logic
@@ -62,6 +65,9 @@ exports.createJob = async (req, res, next) => {
       totalSlots,
       category,
       createdBy: req.user._id,
+      ...(experienceLevel && { experienceLevel }),
+      ...(workMode && { workMode }),
+      ...(deadline && { deadline }),
     });
 
     res.status(201).json({
@@ -76,27 +82,31 @@ exports.createJob = async (req, res, next) => {
 // GET /api/v1/jobs — Public
 exports.getAllJobs = async (req, res, next) => {
   try {
-    const { keyword, location, type, status, page = 1, limit = 10 } = req.query;
+    const {
+      keyword,
+      location,
+      type,
+      status,
+      category,
+      experienceLevel,
+      workMode,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
     const filter = {};
 
     if (keyword) {
       const regex = new RegExp(keyword, "i");
-
       filter.$or = [{ title: regex }, { description: regex }];
     }
 
-    if (location) {
-      filter.location = new RegExp(location, "i");
-    }
-
-    if (type) {
-      filter.type = type;
-    }
-
-    if (status) {
-      filter.status = status;
-    }
+    if (location) filter.location = new RegExp(location, "i");
+    if (type) filter.type = type;
+    if (status) filter.status = status;
+    if (category) filter.category = category;
+    if (experienceLevel) filter.experienceLevel = experienceLevel;
+    if (workMode) filter.workMode = workMode;
 
     const skip = (Number(page) - 1) * Number(limit);
 
@@ -302,7 +312,6 @@ exports.toggleSaveJob = async (req, res, next) => {
 exports.applyToJob = async (req, res, next) => {
   try {
     const { jobId } = req.params;
-
     const { coverLetter } = req.body;
 
     const job = await JobPost.findById(jobId);
@@ -314,11 +323,37 @@ exports.applyToJob = async (req, res, next) => {
       });
     }
 
+    // Snapshot the applicant's resume URL at time of application
+    const resumeSnapshot = req.user.resumeUrl || null;
+
+    // Compute AI match score between user skills and job requirements
+    let matchScore = null;
+    try {
+      const userText = (req.user.skills || []).join(", ");
+      const jobText = job.title + " " + (job.requirements || []).join(", ");
+
+      if (userText.trim()) {
+        const embeddings = await hf.featureExtraction({
+          model: "sentence-transformers/all-MiniLM-L6-v2",
+          inputs: [userText, jobText],
+        });
+        const similarity = cosineSimilarity(embeddings[0], embeddings[1]);
+        matchScore = Math.round(Math.max(0, Math.min(1, similarity)) * 100);
+      }
+    } catch (err) {
+      console.error("Match score computation failed:", err.message);
+    }
+
     const application = await Application.create({
       user: req.user._id,
       job: jobId,
       coverLetter,
+      resumeSnapshot,
+      matchScore,
     });
+
+    // Increment cached applicant count on the job
+    await JobPost.findByIdAndUpdate(jobId, { $inc: { applicantCount: 1 } });
 
     res.status(201).json({
       success: true,
