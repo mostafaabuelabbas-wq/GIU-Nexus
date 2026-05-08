@@ -151,7 +151,12 @@ const getAdminStats = async (req, res, next) => {
             {
                 $group: {
                     _id: {
-                        $dateToString: { format: "%Y-%m-%d", date: "$appliedAt", timezone: "UTC", startOfWeek: "monday" }
+                        $dateToString: {
+                            format: "%Y-%m-%d",
+                            date: {
+                                $dateTrunc: { date: "$appliedAt", unit: "week", startOfWeek: "monday" }
+                            }
+                        }
                     },
                     count: { $sum: 1 },
                 },
