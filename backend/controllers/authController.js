@@ -15,7 +15,12 @@ const signToken = (id, role) => {
 exports.register = async (req, res, next) => {
     try {
         const { name, email, password, role } = req.body;
-
+        if (role === "admin") {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Cannot register as admin" 
+            });
+        }
         if (!name || !email || !password || !role) {
             return res.status(400).json({ success: false, message: "Please provide name, email, password, and role" });
         }
