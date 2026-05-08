@@ -1,4 +1,5 @@
 const { getJobApplicants } = require('../controllers/applicationController');
+
 const express = require('express');
 const router = express.Router();
 
@@ -12,7 +13,8 @@ const {
   toggleSaveJob,
   applyToJob,
   getMyJobs,
-  getSavedJobs
+  getSavedJobs,
+  getRecommendedJobs
 } = require('../controllers/jobController');
 
 
@@ -21,6 +23,7 @@ router.get('/', getAllJobs);
 
 
 // Protected routes BEFORE /:id
+
 router.get(
   '/my-jobs',
   protect,
@@ -33,6 +36,14 @@ router.get(
   protect,
   authorize('jobSeeker'),
   getSavedJobs
+);
+
+// AI recommendations route
+router.get(
+  '/recommended',
+  protect,
+  authorize('jobSeeker'),
+  getRecommendedJobs
 );
 
 router.get(
