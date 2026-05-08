@@ -31,11 +31,6 @@ exports.updateProfile = async (req, res, next) => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
     });
 
-    // If a profile picture was uploaded, its Cloudinary URL takes precedence
-    if (req.file) {
-      updates.profilePicture = req.file.path;
-    }
-
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
       new: true,
       runValidators: true,

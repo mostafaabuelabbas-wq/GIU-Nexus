@@ -143,19 +143,6 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    // OTP for forgot-password verification (Bonus Feature 3)
-    otp: {
-      type: String,
-      default: null,
-      select: false,
-    },
-
-    otpExpires: {
-      type: Date,
-      default: null,
-      select: false,
-    },
-
     // Track last login for admin analytics and "active users" stats
     lastLogin: {
       type: Date,
