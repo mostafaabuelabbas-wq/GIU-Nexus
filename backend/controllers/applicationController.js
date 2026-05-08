@@ -102,7 +102,7 @@ exports.getJobApplicants = async (req, res, next) => {
         }
 
         const applications = await Application.find({ job: jobId })
-            .populate('user', 'name email extractedSkills');
+            .populate('user', 'name email skills');
 
         res.status(200).json({
             success: true,

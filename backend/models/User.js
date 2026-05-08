@@ -36,9 +36,7 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Populated by Hugging Face NER model in Task 2
-    // Example: ["react", "node.js", "mongodb"]
-    extractedSkills: {  // ← renamed from "skills"
+    skills: {
       type: [String],
       default: [],
     },

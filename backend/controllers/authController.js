@@ -80,7 +80,7 @@ exports.login = async (req, res, next) => {
                 role: user.role,
                 status: user.status,
                 profilePicture: user.profilePicture,
-                skills: user.extractedSkills
+                skills: user.skills
             }
         });
 

@@ -31,7 +31,7 @@ exports.createJob = async (req, res, next) => {
     try {
       const result = await hf.zeroShotClassification({
         model: "facebook/bart-large-mnli",
-        inputs: req.body.description,
+        inputs: [description],
         parameters: {
           candidate_labels: [
             "Frontend",
@@ -43,15 +43,12 @@ exports.createJob = async (req, res, next) => {
           ],
         },
       });
-      // Set category to the highest-scoring label
-
-      category = result[0].label;
+      category = result[0].labels[0];
     } catch (err) {
       console.error(
         "HF classification failed, defaulting to Other:",
         err.message,
       );
-      // Fallback already set to 'Other'
     }
 
     const job = await JobPost.create({
@@ -181,6 +178,29 @@ exports.updateJob = async (req, res, next) => {
         job[field] = req.body[field];
       }
     });
+
+    // Re-classify category when description is updated
+    if (req.body.description !== undefined) {
+      try {
+        const result = await hf.zeroShotClassification({
+          model: "facebook/bart-large-mnli",
+          inputs: [req.body.description],
+          parameters: {
+            candidate_labels: [
+              "Frontend",
+              "Backend",
+              "AI/ML",
+              "DevOps",
+              "Data Engineering",
+              "Other",
+            ],
+          },
+        });
+        job.category = result[0].labels[0];
+      } catch (err) {
+        console.error("HF re-classification failed, keeping existing category:", err.message);
+      }
+    }
 
     await job.save();
 
@@ -361,7 +381,7 @@ function cosineSimilarity(vecA, vecB) {
 exports.getRecommendedJobs = async (req, res, next) => {
   try {
     // Build user skills text
-    const studentText = (req.user.extractedSkills || []).join(", ");
+    const studentText = (req.user.skills || []).join(", ");
 
     // Fetch open jobs
     const jobs = await JobPost.find({
