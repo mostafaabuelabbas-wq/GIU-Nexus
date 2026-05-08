@@ -14,15 +14,21 @@ const {
   applyToJob,
   getMyJobs,
   getSavedJobs,
-  getRecommendedJobs
+  getRecommendedJobs,
+  createJob
 } = require('../controllers/jobController');
 
 
 // Public routes
 router.get('/', getAllJobs);
 
-
-// Protected routes BEFORE /:id
+// Protected routes (Recruiter)
+router.post(
+  '/',
+  protect,
+  authorize('recruiter'),
+  createJob
+);
 
 router.get(
   '/my-jobs',
@@ -31,6 +37,7 @@ router.get(
   getMyJobs
 );
 
+// Protected routes (Job Seeker)
 router.get(
   '/saved',
   protect,
