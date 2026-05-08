@@ -20,6 +20,10 @@ exports.register = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Please provide name, email, password, and role" });
         }
 
+        if (!["jobSeeker", "recruiter"].includes(role)) {
+            return res.status(400).json({ success: false, message: "Role must be jobSeeker or recruiter" });
+        }
+
         const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
             return res.status(400).json({ success: false, message: "Email already in use" });
@@ -80,7 +84,7 @@ exports.login = async (req, res, next) => {
                 role: user.role,
                 status: user.status,
                 profilePicture: user.profilePicture,
-                skills: user.extractedSkills
+                skills: user.skills
             }
         });
 
@@ -113,13 +117,17 @@ exports.forgotPassword = async (req, res, next) => {
 
         const resetLink = `http://localhost:5000/api/v1/auth/reset-password/${rawToken}`;
 
-        await sendEmail({
-            to: user.email,
-            subject: "Password Reset Request",
-            text: `You requested a password reset. Click the link below to reset your password (expires in 10 minutes):\n\n${resetLink}\n\nIf you did not request this, ignore this email.`
-        });
+        try {
+            await sendEmail({
+                to: user.email,
+                subject: "Password Reset Request",
+                text: `You requested a password reset. Click the link below to reset your password (expires in 10 minutes):\n\n${resetLink}\n\nIf you did not request this, ignore this email.`
+            });
+        } catch (emailErr) {
+            console.error("Password reset email failed:", emailErr.message);
+        }
 
-        res.status(200).json({ success: true, message: "Password reset email sent" });
+        return res.status(200).json({ success: true, message: "Password reset email sent" });
 
     } catch (error) {
         next(error);

@@ -126,13 +126,13 @@ exports.extractSkills = async (req, res, next) => {
     ];
 
     // Save extracted skills
-    user.extractedSkills = skills;
+    user.skills = skills;
 
     await user.save();
 
     res.status(200).json({
       success: true,
-      skills: user.extractedSkills,
+      skills: user.skills,
       extracted: skills,
     });
   } catch (error) {
@@ -143,7 +143,7 @@ exports.extractSkills = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      skills: user?.extractedSkills || [],
+      skills: user?.skills || [],
       message: "AI extraction failed. Returning existing skills.",
     });
   }

@@ -17,6 +17,13 @@ exports.getMyApplications = async (req, res, next) => {
 
 exports.updateApplicationStatus = async (req, res, next) => {
     try {
+        if (req.user.status !== "approved") {
+            return res.status(403).json({
+                success: false,
+                message: "Your account must be approved before managing applications."
+            });
+        }
+
         const { status } = req.body;
 
         const allowedStatuses = ['pending', 'shortlisted', 'rejected'];
@@ -83,6 +90,13 @@ exports.getAllApplications = async (req, res, next) => {
 
 exports.getJobApplicants = async (req, res, next) => {
     try {
+        if (req.user.status !== "approved") {
+            return res.status(403).json({
+                success: false,
+                message: "Your account must be approved before managing applications."
+            });
+        }
+
         const { jobId } = req.params;
 
         const job = await JobPost.findById(jobId);
@@ -102,7 +116,7 @@ exports.getJobApplicants = async (req, res, next) => {
         }
 
         const applications = await Application.find({ job: jobId })
-            .populate('user', 'name email extractedSkills');
+            .populate('user', 'name email skills');
 
         res.status(200).json({
             success: true,

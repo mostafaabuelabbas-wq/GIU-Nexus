@@ -7,11 +7,11 @@ const hf = require("../services/hfService");
 exports.createJob = async (req, res, next) => {
   try {
     // Check if recruiter is approved
-    if (req.user.status === "pending") {
+    if (req.user.status !== "approved") {
       return res.status(403).json({
         success: false,
         message:
-          "Your account is pending approval. Wait for admin approval before posting jobs.",
+          "Your account must be approved before posting jobs.",
       });
     }
 
@@ -31,7 +31,7 @@ exports.createJob = async (req, res, next) => {
     try {
       const result = await hf.zeroShotClassification({
         model: "facebook/bart-large-mnli",
-        inputs: req.body.description,
+        inputs: [req.body.description],
         parameters: {
           candidate_labels: [
             "Frontend",
@@ -43,9 +43,7 @@ exports.createJob = async (req, res, next) => {
           ],
         },
       });
-      // Set category to the highest-scoring label
-
-      category = result[0].label;
+      category = result[0].labels[0];
     } catch (err) {
       console.error(
         "HF classification failed, defaulting to Other:",
@@ -145,6 +143,13 @@ exports.getJobById = async (req, res, next) => {
 // PATCH /api/v1/jobs/:id — Recruiter (owner only)
 exports.updateJob = async (req, res, next) => {
   try {
+    if (req.user.status !== "approved") {
+      return res.status(403).json({
+        success: false,
+        message: "Your account must be approved before managing jobs.",
+      });
+    }
+
     const job = await JobPost.findById(req.params.id);
 
     if (!job) {
@@ -176,11 +181,35 @@ exports.updateJob = async (req, res, next) => {
       "workMode",
     ];
 
+    const descriptionChanged = req.body.description !== undefined && req.body.description !== job.description;
+
     allowed.forEach((field) => {
       if (req.body[field] !== undefined) {
         job[field] = req.body[field];
       }
     });
+
+    if (descriptionChanged) {
+      try {
+        const result = await hf.zeroShotClassification({
+          model: "facebook/bart-large-mnli",
+          inputs: [job.description],
+          parameters: {
+            candidate_labels: [
+              "Frontend",
+              "Backend",
+              "AI/ML",
+              "DevOps",
+              "Data Engineering",
+              "Other",
+            ],
+          },
+        });
+        job.category = result[0].labels[0];
+      } catch (err) {
+        console.error("HF re-classification failed, keeping existing category:", err.message);
+      }
+    }
 
     await job.save();
 
@@ -196,6 +225,13 @@ exports.updateJob = async (req, res, next) => {
 // DELETE /api/v1/jobs/:id — Recruiter (owner) OR Admin
 exports.deleteJob = async (req, res, next) => {
   try {
+    if (req.user.role === "recruiter" && req.user.status !== "approved") {
+      return res.status(403).json({
+        success: false,
+        message: "Your account must be approved before managing jobs.",
+      });
+    }
+
     const job = await JobPost.findById(req.params.id);
 
     if (!job) {
@@ -294,6 +330,13 @@ exports.applyToJob = async (req, res, next) => {
       });
     }
 
+    if (job.status !== "open") {
+      return res.status(400).json({
+        success: false,
+        message: "This job is no longer accepting applications",
+      });
+    }
+
     const application = await Application.create({
       user: req.user._id,
       job: jobId,
@@ -339,7 +382,7 @@ exports.getSavedJobs = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      jobs: user.savedJobs,
+      jobs: user.savedJobs.filter((job) => job.status === "open"),
     });
   } catch (err) {
     next(err);
@@ -361,7 +404,7 @@ function cosineSimilarity(vecA, vecB) {
 exports.getRecommendedJobs = async (req, res, next) => {
   try {
     // Build user skills text
-    const studentText = (req.user.extractedSkills || []).join(", ");
+    const studentText = (req.user.skills || []).join(", ");
 
     // Fetch open jobs
     const jobs = await JobPost.find({
