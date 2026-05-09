@@ -29,7 +29,7 @@ exports.createJob = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message:
-          "Your account must be approved before posting jobs.",
+          "Your account is pending approval. Wait for admin approval before posting jobs.",
       });
     }
 
