@@ -133,6 +133,7 @@ exports.extractSkills = async (req, res, next) => {
     res.status(200).json({
       success: true,
       skills: user?.skills || [],
+      extracted: [],
       message: "AI extraction failed. Returning existing skills.",
     });
   }
