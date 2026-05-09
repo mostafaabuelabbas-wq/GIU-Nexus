@@ -185,7 +185,40 @@ backend/
 │   └── swagger.js
 ├── controllers/
 │   ├── authController.js
-...
+│   ├── userController.js
+│   ├── jobController.js
+│   ├── applicationController.js
+│   └── profileController.js
+├── middleware/
+│   ├── auth.js
+│   ├── errorHandler.js
+│   ├── rateLimiter.js
+│   ├── tokenBlacklist.js
+│   └── upload.js
+├── models/
+│   ├── User.js
+│   ├── JobPost.js
+│   └── Application.js
+├── routes/
+│   ├── authRoutes.js
+│   ├── userRoutes.js
+│   ├── jobRoutes.js
+│   ├── applicationRoutes.js
+│   └── profileRoutes.js
+├── services/
+│   ├── hfService.js
+│   └── emailService.js
+├── tests/
+│   ├── auth.test.js
+│   ├── jobs.test.js
+│   ├── profile.test.js
+│   ├── env-setup.js
+│   └── helpers/db.js
+├── app.js
+├── server.js
+├── jest.config.js
+├── .env.example
+└── package.json
 ```
 
 *Software Engineering — Spring 2026 — German International University — Dr. John Zaki*
