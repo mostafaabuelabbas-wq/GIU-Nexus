@@ -161,6 +161,7 @@ Interactive documentation: `http://localhost:5000/api-docs`
 ## Environment Variables
 
 Copy `.env.example` to `.env` and fill in your values:
+```
 PORT=5000
 MONGO_URI=mongodb+srv://...
 JWT_SECRET=your-random-secret
@@ -173,11 +174,10 @@ EMAIL_PASS=your-app-password
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_SECRET=your-secret
+```
 
 ⚠️ Never commit your .env file. It is in .gitignore.
----
-
-## Project Structure
+```
 backend/
 ├── config/
 │   ├── db.js
@@ -185,41 +185,7 @@ backend/
 │   └── swagger.js
 ├── controllers/
 │   ├── authController.js
-│   ├── userController.js
-│   ├── jobController.js
-│   ├── applicationController.js
-│   └── profileController.js
-├── middleware/
-│   ├── auth.js
-│   ├── errorHandler.js
-│   ├── rateLimiter.js
-│   ├── tokenBlacklist.js
-│   └── upload.js
-├── models/
-│   ├── User.js
-│   ├── JobPost.js
-│   └── Application.js
-├── routes/
-│   ├── authRoutes.js
-│   ├── userRoutes.js
-│   ├── jobRoutes.js
-│   ├── applicationRoutes.js
-│   └── profileRoutes.js
-├── services/
-│   ├── hfService.js
-│   └── emailService.js
-├── tests/
-│   ├── auth.test.js
-│   ├── jobs.test.js
-│   ├── profile.test.js
-│   ├── env-setup.js
-│   └── helpers/db.js
-├── app.js
-├── server.js
-├── jest.config.js
-├── .env.example
-└── package.json
-
----
+...
+```
 
 *Software Engineering — Spring 2026 — German International University — Dr. John Zaki*
