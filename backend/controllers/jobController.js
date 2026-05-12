@@ -9,18 +9,27 @@ function cosineSimilarity(vecA, vecB) {
   const magB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
   return dot / (magA * magB);
 }
-
 async function classifyJobCategory(description) {
   const result = await hf.zeroShotClassification({
     model: "facebook/bart-large-mnli",
-    inputs: [description],
+    inputs: description,
     parameters: {
-      candidate_labels: ["Frontend", "Backend", "AI/ML", "DevOps", "Data Engineering", "Other"],
+      candidate_labels: [
+        "Frontend",
+        "Backend",
+        "AI/ML",
+        "DevOps",
+        "Data Engineering",
+        "Other",
+      ],
     },
   });
-  return result[0].labels[0];
-}
 
+  console.log("HF CLASSIFICATION RESULT:");
+  console.log(result);
+
+  return result[0].label;
+}
 // POST /api/v1/jobs — Recruiter only (approved)
 exports.createJob = async (req, res, next) => {
   try {
@@ -34,20 +43,40 @@ exports.createJob = async (req, res, next) => {
     }
 
     const {
-      title, company, description, requirements, location,
-      type, salary, totalSlots, experienceLevel, workMode, deadline,
+      title,
+      company,
+      description,
+      requirements,
+      location,
+      type,
+      salary,
+      totalSlots,
+      experienceLevel,
+      workMode,
+      deadline,
     } = req.body;
 
     let category = "Other";
     try {
       category = await classifyJobCategory(description);
     } catch (err) {
-      console.error("HF classification failed, defaulting to Other:", err.message);
+      console.error(
+        "HF classification failed, defaulting to Other:",
+        err.message,
+      );
     }
 
     const job = await JobPost.create({
-      title, company, description, requirements, location,
-      type, salary, totalSlots, category, createdBy: req.user._id,
+      title,
+      company,
+      description,
+      requirements,
+      location,
+      type,
+      salary,
+      totalSlots,
+      category,
+      createdBy: req.user._id,
       ...(experienceLevel && { experienceLevel }),
       ...(workMode && { workMode }),
       ...(deadline && { deadline }),
@@ -74,8 +103,15 @@ exports.createJob = async (req, res, next) => {
 exports.getAllJobs = async (req, res, next) => {
   try {
     const {
-      keyword, location, type, status, category,
-      experienceLevel, workMode, page = 1, limit = 10,
+      keyword,
+      location,
+      type,
+      status,
+      category,
+      experienceLevel,
+      workMode,
+      page = 1,
+      limit = 10,
     } = req.query;
 
     const filter = {};
@@ -104,7 +140,10 @@ exports.getAllJobs = async (req, res, next) => {
 // GET /api/v1/jobs/:id — Public
 exports.getJobById = async (req, res, next) => {
   try {
-    const job = await JobPost.findById(req.params.id).populate("createdBy", "name email");
+    const job = await JobPost.findById(req.params.id).populate(
+      "createdBy",
+      "name email",
+    );
 
     if (!job) {
       return res.status(404).json({ success: false, message: "Job not found" });
@@ -133,15 +172,29 @@ exports.updateJob = async (req, res, next) => {
     }
 
     if (job.createdBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: "Not authorised to edit this job" });
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorised to edit this job" });
     }
 
     const allowed = [
-      "title", "company", "description", "requirements", "location",
-      "type", "salary", "totalSlots", "status", "deadline", "experienceLevel", "workMode",
+      "title",
+      "company",
+      "description",
+      "requirements",
+      "location",
+      "type",
+      "salary",
+      "totalSlots",
+      "status",
+      "deadline",
+      "experienceLevel",
+      "workMode",
     ];
 
-    const descriptionChanged = req.body.description !== undefined && req.body.description !== job.description;
+    const descriptionChanged =
+      req.body.description !== undefined &&
+      req.body.description !== job.description;
 
     allowed.forEach((field) => {
       if (req.body[field] !== undefined) job[field] = req.body[field];
@@ -151,7 +204,7 @@ exports.updateJob = async (req, res, next) => {
       try {
         const result = await hf.zeroShotClassification({
           model: "facebook/bart-large-mnli",
-          inputs: [job.description],
+          inputs: job.description,
           parameters: {
             candidate_labels: [
               "Frontend",
@@ -163,15 +216,21 @@ exports.updateJob = async (req, res, next) => {
             ],
           },
         });
-        job.category = result[0].labels[0];
+        job.category = result[0].label;
       } catch (err) {
-        console.error("HF re-classification failed, keeping existing category:", err.message);
+        console.error(
+          "HF re-classification failed, keeping existing category:",
+          err.message,
+        );
       }
     }
 
     await job.save();
 
-    if (req.body.description !== undefined || req.body.requirements !== undefined) {
+    if (
+      req.body.description !== undefined ||
+      req.body.requirements !== undefined
+    ) {
       try {
         const embResult = await hf.featureExtraction({
           model: "sentence-transformers/all-MiniLM-L6-v2",
@@ -205,8 +264,13 @@ exports.deleteJob = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Job not found" });
     }
 
-    if (req.user.role === "recruiter" && job.createdBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: "Not authorised to delete this job" });
+    if (
+      req.user.role === "recruiter" &&
+      job.createdBy.toString() !== req.user._id.toString()
+    ) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorised to delete this job" });
     }
 
     await JobPost.findByIdAndDelete(req.params.id);
@@ -227,16 +291,26 @@ exports.toggleSaveJob = async (req, res, next) => {
     }
 
     if (job.status !== "open") {
-      return res.status(400).json({ success: false, message: "Cannot save a closed job" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Cannot save a closed job" });
     }
 
     const user = await User.findById(req.user._id);
-    const alreadySaved = user.savedJobs.some((id) => id.toString() === job._id.toString());
+    const alreadySaved = user.savedJobs.some(
+      (id) => id.toString() === job._id.toString(),
+    );
 
     if (alreadySaved) {
-      user.savedJobs = user.savedJobs.filter((id) => id.toString() !== job._id.toString());
+      user.savedJobs = user.savedJobs.filter(
+        (id) => id.toString() !== job._id.toString(),
+      );
       await user.save();
-      return res.status(200).json({ success: true, message: "Job removed from saved", saved: false });
+      return res.status(200).json({
+        success: true,
+        message: "Job removed from saved",
+        saved: false,
+      });
     }
 
     user.savedJobs.push(job._id);
@@ -297,7 +371,10 @@ exports.applyToJob = async (req, res, next) => {
     res.status(201).json({ success: true, application });
   } catch (err) {
     if (err.code === 11000) {
-      return res.status(400).json({ success: false, message: "You have already applied to this job" });
+      return res.status(400).json({
+        success: false,
+        message: "You have already applied to this job",
+      });
     }
     next(err);
   }
@@ -365,17 +442,22 @@ exports.getRecommendedJobs = async (req, res, next) => {
       });
 
       if (userEmbedIdx !== -1) {
-        User.findByIdAndUpdate(req.user._id, { embedding: freshVectors[userEmbedIdx] }).catch(() => {});
+        User.findByIdAndUpdate(req.user._id, {
+          embedding: freshVectors[userEmbedIdx],
+        }).catch(() => {});
       }
       jobs.forEach((job) => {
         const idx = jobEmbedIdxMap[job._id.toString()];
         if (idx !== undefined) {
-          JobPost.findByIdAndUpdate(job._id, { embedding: freshVectors[idx] }).catch(() => {});
+          JobPost.findByIdAndUpdate(job._id, {
+            embedding: freshVectors[idx],
+          }).catch(() => {});
         }
       });
     }
 
-    const userVector = userEmbedIdx !== -1 ? freshVectors[userEmbedIdx] : userFull.embedding;
+    const userVector =
+      userEmbedIdx !== -1 ? freshVectors[userEmbedIdx] : userFull.embedding;
 
     const scoredJobs = jobs.map((job) => {
       const idx = jobEmbedIdxMap[job._id.toString()];
