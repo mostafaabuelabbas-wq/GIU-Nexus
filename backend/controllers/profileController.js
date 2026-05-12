@@ -62,6 +62,7 @@ exports.changePassword = async (req, res, next) => {
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
+
     }
 
     const isMatch = await user.comparePassword(currentPassword);
@@ -76,6 +77,7 @@ exports.changePassword = async (req, res, next) => {
     await user.save();
 
     res.status(200).json({ success: true, message: "Password updated successfully" });
+
   } catch (error) {
     next(error);
   }
@@ -92,18 +94,48 @@ exports.extractSkills = async (req, res, next) => {
       });
     }
 
-    const result = await hf.tokenClassification({
-      model: "dslim/bert-base-NER",
-      inputs: user.bio,
-    });
+const result = await hf.tokenClassification({
+  model: "dslim/bert-base-NER",
+  inputs: user.bio,
+});
 
-    const skills = [
-      ...new Set(
-        result
-          .filter((e) => ["B-MISC", "I-MISC", "B-ORG"].includes(e.entity_group))
-          .map((e) => e.word)
-      ),
-    ];
+let extractedWords = result.map((e) =>
+  e.word.replace("##", "")
+);
+
+for (let i = 0; i < extractedWords.length - 1; i++) {
+  if (
+    extractedWords[i] === "Mon" &&
+    extractedWords[i + 1] === "goDB"
+  ) {
+    extractedWords[i] = "MongoDB";
+    extractedWords.splice(i + 1, 1);
+  }
+}
+
+const skills = [
+  ...new Set(
+    result
+      .filter((e) =>
+        ["MISC", "ORG", "B-MISC", "I-MISC", "B-ORG"].includes(
+          e.entity_group
+        )
+      )
+      .map((e) => e.word.replace("##", ""))
+      .map((word, index, arr) => {
+        if (word === "Mon" && arr[index + 1] === "goDB") {
+          return "MongoDB";
+        }
+        return word;
+      })
+      .filter(
+        (word, index, arr) =>
+          word.length > 2 &&
+          /^[a-zA-Z0-9.+#-]+$/.test(word) &&
+          !(word === "goDB" && arr[index - 1] === "MongoDB")
+      )
+  ),
+];
 
     // Save extracted skills
     user.skills = skills;
