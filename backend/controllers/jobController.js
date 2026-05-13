@@ -12,7 +12,7 @@ function cosineSimilarity(vecA, vecB) {
 async function classifyJobCategory(description) {
   const result = await hf.zeroShotClassification({
     model: "facebook/bart-large-mnli",
-    inputs: description,
+    inputs: [description],          // ← wrap in array
     parameters: {
       candidate_labels: [
         "Frontend",
@@ -25,10 +25,7 @@ async function classifyJobCategory(description) {
     },
   });
 
-  console.log("HF CLASSIFICATION RESULT:");
-  console.log(result);
-
-  return result[0].label;
+  return result[0].labels[0];      // ← labels (plural), not label
 }
 // POST /api/v1/jobs — Recruiter only (approved)
 exports.createJob = async (req, res, next) => {
