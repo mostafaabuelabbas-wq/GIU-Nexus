@@ -10,7 +10,11 @@ function App() {
         <Routes>
 
           {/* Public Routes */}
-          <Route path="/" element={<div>HomePage</div>} />
+          <Route path="/" element={
+            <div className="flex items-center justify-center min-h-screen bg-blue-600">
+              <h1 className="text-4xl font-bold text-white">Tailwind is working!</h1>
+            </div>
+          } />
           <Route path="/login" element={<div>LoginPage</div>} />
           <Route path="/register" element={<div>RegisterPage</div>} />
           <Route path="/forgot-password" element={<div>ForgotPasswordPage</div>} />
@@ -95,7 +99,7 @@ function App() {
           } />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="/" element={<Navigate to="/" />} />
 
         </Routes>
       </BrowserRouter>
