@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 export default function ChangePasswordPage() {
   const navigate = useNavigate()
@@ -105,6 +106,7 @@ export default function ChangePasswordPage() {
           </form>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

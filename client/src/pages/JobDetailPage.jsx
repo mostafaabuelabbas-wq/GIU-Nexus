@@ -31,8 +31,7 @@ export default function JobDetailPage() {
     api.get(`/jobs/${id}`)
       .then(({ data }) => {
         if (cancelled) return
-        setJob(data)
-        if (data.myApplication) setApplication(data.myApplication)
+        setJob(data.job ?? data)
         setLoading(false)
       })
       .catch(err => { if (!cancelled) { setError(err.response?.data?.message || 'Job not found.'); setLoading(false) } })

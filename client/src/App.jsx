@@ -6,6 +6,9 @@ import JobListPage from './pages/JobListPage'
 import JobDetailPage from './pages/JobDetailPage'
 import ChangePasswordPage from './pages/ChangePasswordPage'
 import PendingRecruitersPage from './pages/PendingRecruitersPage'
+import RecommendedJobsPage from './pages/RecommendedJobsPage'
+import SavedJobsPage from './pages/SavedJobsPage'
+import MyApplicationsPage from './pages/MyApplicationsPage'
 
 function App() {
   return (
@@ -25,12 +28,12 @@ function App() {
           {/* Job Seeker Routes */}
           <Route path="/jobs/recommended" element={
             <RoleRoute roles={['jobSeeker']}>
-              <div>RecommendedJobsPage</div>
+              <RecommendedJobsPage />
             </RoleRoute>
           } />
           <Route path="/jobs/saved" element={
             <RoleRoute roles={['jobSeeker']}>
-              <div>SavedJobsPage</div>
+              <SavedJobsPage />
             </RoleRoute>
           } />
           <Route path="/profile" element={
@@ -50,7 +53,7 @@ function App() {
           } />
           <Route path="/applications/my" element={
             <RoleRoute roles={['jobSeeker']}>
-              <div>MyApplicationsPage</div>
+              <MyApplicationsPage />
             </RoleRoute>
           } />
 
