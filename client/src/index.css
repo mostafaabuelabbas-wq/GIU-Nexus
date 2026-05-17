@@ -1,22 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Cairo:wght@600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --radius: 0.5rem;
+    --cream:   #F1EAD9;
+    --paper:   #F7F1E3;
+    --ink:     #161310;
+    --ink-2:   #3B342B;
+    --palm:    #2F4A2E;
+    --pink:    #EE5688;
+    --sun:     #E96A3A;
+    --ochre:   #E5A93A;
+    --line:    #1613101A;
   }
-}
-
-* {
-  border-color: hsl(var(--border));
-}
-
-body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  html { background-color: #F1EAD9; }
+  body {
+    background-color: #F1EAD9;
+    color: #161310;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: #EE5688; color: #fff; }
 }

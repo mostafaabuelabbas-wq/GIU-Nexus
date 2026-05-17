@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
 import RoleRoute from './components/RoleRoute'
+import HomePage from './pages/HomePage'
 
 function App() {
   return (
@@ -10,11 +11,7 @@ function App() {
         <Routes>
 
           {/* Public Routes */}
-          <Route path="/" element={
-            <div className="flex items-center justify-center min-h-screen bg-blue-600">
-              <h1 className="text-4xl font-bold text-white">Tailwind is working!</h1>
-            </div>
-          } />
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<div>LoginPage</div>} />
           <Route path="/register" element={<div>RegisterPage</div>} />
           <Route path="/forgot-password" element={<div>ForgotPasswordPage</div>} />
