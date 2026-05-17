@@ -2,7 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
 import RoleRoute from './components/RoleRoute'
-import HomePage from './pages/HomePage'
+import JobListPage from './pages/JobListPage'
+import ChangePasswordPage from './pages/ChangePasswordPage'
+import PendingRecruitersPage from './pages/PendingRecruitersPage'
 
 function App() {
   return (
@@ -11,12 +13,12 @@ function App() {
         <Routes>
 
           {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<div>HomePage — coming soon (Hassan)</div>} />
           <Route path="/login" element={<div>LoginPage</div>} />
           <Route path="/register" element={<div>RegisterPage</div>} />
           <Route path="/forgot-password" element={<div>ForgotPasswordPage</div>} />
           <Route path="/reset-password/:token" element={<div>ResetPasswordPage</div>} />
-          <Route path="/jobs" element={<div>JobListPage</div>} />
+          <Route path="/jobs" element={<JobListPage />} />
           <Route path="/jobs/:id" element={<div>JobDetailPage</div>} />
 
           {/* Job Seeker Routes */}
@@ -42,7 +44,7 @@ function App() {
           } />
           <Route path="/profile/change-password" element={
             <PrivateRoute>
-              <div>ChangePasswordPage</div>
+              <ChangePasswordPage />
             </PrivateRoute>
           } />
           <Route path="/applications/my" element={
@@ -81,7 +83,7 @@ function App() {
           } />
           <Route path="/admin/recruiters" element={
             <RoleRoute roles={['admin']}>
-              <div>PendingRecruitersPage</div>
+              <PendingRecruitersPage />
             </RoleRoute>
           } />
           <Route path="/admin/jobs" element={
