@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
 import RoleRoute from './components/RoleRoute'
 import JobListPage from './pages/JobListPage'
+import JobDetailPage from './pages/JobDetailPage'
 import ChangePasswordPage from './pages/ChangePasswordPage'
 import PendingRecruitersPage from './pages/PendingRecruitersPage'
 
@@ -19,7 +20,7 @@ function App() {
           <Route path="/forgot-password" element={<div>ForgotPasswordPage</div>} />
           <Route path="/reset-password/:token" element={<div>ResetPasswordPage</div>} />
           <Route path="/jobs" element={<JobListPage />} />
-          <Route path="/jobs/:id" element={<div>JobDetailPage</div>} />
+          <Route path="/jobs/:id" element={<JobDetailPage />} />
 
           {/* Job Seeker Routes */}
           <Route path="/jobs/recommended" element={

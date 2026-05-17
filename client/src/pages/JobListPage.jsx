@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import JobCard from '../components/JobCard'
 import { useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import Navbar from '../components/Navbar'
@@ -172,10 +173,7 @@ export default function JobListPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {jobs.map(j => (
-                <div key={j._id} className="bg-white rounded-[20px] p-5 border border-[#16131010]">
-                  <p className="font-['Space_Grotesk'] font-bold text-[#161310]">{j.title}</p>
-                  <p className="text-[#3B342B] text-sm">{j.company}</p>
-                </div>
+                <JobCard key={j._id} job={j} showSaveButton={true} />
               ))}
             </div>
 
