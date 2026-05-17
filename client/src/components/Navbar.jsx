@@ -69,9 +69,9 @@ export default function Navbar() {
             {role === 'jobSeeker' && (
               <>
                 <NavLink to="/jobs" className={linkClass}>Find jobs</NavLink>
-                <NavLink to="/jobs/recommended" className={cx(linkClass({}), 'hidden md:block')}>Recommended</NavLink>
-                <NavLink to="/jobs/saved" className={cx(linkClass({}), 'hidden md:block')}>Saved</NavLink>
-                <NavLink to="/applications/my" className={cx(linkClass({}), 'hidden lg:block')}>My applications</NavLink>
+                <NavLink to="/jobs/recommended" className={({ isActive }) => cx(linkClass({ isActive }), 'hidden md:block')}>Recommended</NavLink>
+                <NavLink to="/jobs/saved" className={({ isActive }) => cx(linkClass({ isActive }), 'hidden md:block')}>Saved</NavLink>
+                <NavLink to="/applications/my" className={({ isActive }) => cx(linkClass({ isActive }), 'hidden lg:block')}>My applications</NavLink>
               </>
             )}
             {role === 'recruiter' && (

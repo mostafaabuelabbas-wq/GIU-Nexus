@@ -1,11 +1,11 @@
+// Matches the six labels the backend assigns via HuggingFace zero-shot classification
 const PALETTE = {
-  Frontend:       { bg: '#DBEAFE', text: '#1D4ED8' },
-  Backend:        { bg: '#DCFCE7', text: '#15803D' },
-  'Data Science': { bg: '#FEF3C7', text: '#B45309' },
-  DevOps:         { bg: '#F3E8FF', text: '#7E22CE' },
-  Design:         { bg: '#FCE7F3', text: '#BE185D' },
-  Mobile:         { bg: '#FFEDD5', text: '#C2410C' },
-  Marketing:      { bg: '#FEF9C3', text: '#854D0E' },
+  Frontend:           { bg: '#DBEAFE', text: '#1D4ED8' },
+  Backend:            { bg: '#DCFCE7', text: '#15803D' },
+  'AI/ML':            { bg: '#F3E8FF', text: '#7E22CE' },
+  DevOps:             { bg: '#CCFBF1', text: '#0F766E' },
+  'Data Engineering': { bg: '#FEF3C7', text: '#B45309' },
+  Other:              { bg: '#F1F5F9', text: '#475569' },
 }
 
 export default function CategoryBadge({ category, size = 'md' }) {

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import api from '../services/api'
 import ApplicationStatusBadge from '../components/ApplicationStatusBadge'
 import Spinner from '../components/Spinner'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 const TYPE_LABEL = { 'full-time': 'Full-time', 'part-time': 'Part-time', 'internship': 'Internship' }
 
@@ -19,8 +21,9 @@ export default function MyApplicationsPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2]">
-      <div className="max-w-4xl mx-auto px-4 py-10">
+    <div className="min-h-screen bg-[#F1EAD9] flex flex-col">
+      <Navbar />
+      <div className="flex-1 max-w-[1360px] w-full mx-auto px-10 py-10">
 
         {/* Header */}
         <div className="mb-8">
@@ -119,6 +122,7 @@ export default function MyApplicationsPage() {
         )}
 
       </div>
+      <Footer />
     </div>
   )
 }

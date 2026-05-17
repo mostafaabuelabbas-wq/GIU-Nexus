@@ -4,6 +4,8 @@ import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import JobCard from '../components/JobCard'
 import Skeleton from '../components/Skeleton'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 export default function RecommendedJobsPage() {
   const { user } = useAuth()
@@ -21,8 +23,9 @@ export default function RecommendedJobsPage() {
   const hasNoSkills = !user?.skills || user.skills.length === 0
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2]">
-      <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="min-h-screen bg-[#F1EAD9] flex flex-col">
+      <Navbar />
+      <div className="flex-1 max-w-[1360px] w-full mx-auto px-10 py-10">
 
         {/* Header */}
         <div className="mb-8">
@@ -100,6 +103,7 @@ export default function RecommendedJobsPage() {
         )}
 
       </div>
+      <Footer />
     </div>
   )
 }

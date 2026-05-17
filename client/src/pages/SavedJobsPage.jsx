@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import api from '../services/api'
 import JobCard from '../components/JobCard'
 import Spinner from '../components/Spinner'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 export default function SavedJobsPage() {
   const [jobs, setJobs] = useState([])
@@ -30,8 +32,9 @@ export default function SavedJobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2]">
-      <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="min-h-screen bg-[#F1EAD9] flex flex-col">
+      <Navbar />
+      <div className="flex-1 max-w-[1360px] w-full mx-auto px-10 py-10">
 
         {/* Header */}
         <div className="mb-8">
@@ -96,6 +99,7 @@ export default function SavedJobsPage() {
         )}
 
       </div>
+      <Footer />
     </div>
   )
 }
