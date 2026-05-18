@@ -44,7 +44,7 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="sticky top-[18px] z-50 flex justify-center px-6 mt-[18px]">
+      <div className="sticky top-[32px] z-50 flex justify-center px-6 mt-[32px]">
         <nav className={cx(
           'flex items-center gap-2 rounded-full py-2 pl-[22px] pr-2 w-full max-w-[1280px] transition-all',
           'bg-white shadow-[0_1px_0_rgba(0,0,0,0.03),0_12px_40px_-28px_rgba(0,0,0,0.25)]',
