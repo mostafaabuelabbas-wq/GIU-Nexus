@@ -168,7 +168,7 @@ export default function ManifestoHow() {
       </section>
 
       {/* ══════════ HOW IT WORKS ══════════ */}
-      <section id="how" className="max-w-[1360px] mx-auto px-10 pb-[120px]">
+      <section id="how-it-works" className="max-w-[1360px] mx-auto px-10 pb-[120px] scroll-mt-[120px]">
         <div className="flex items-baseline justify-between mb-12 gap-6 flex-wrap">
           <div>
             <span className="font-['JetBrains_Mono'] text-xs uppercase tracking-[0.14em] text-[#3B342B] block mb-3">

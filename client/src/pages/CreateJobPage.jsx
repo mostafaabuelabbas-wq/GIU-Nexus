@@ -1,10 +1,15 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
-import Spinner from '../components/Spinner';
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import api from '../services/api'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
+import { getCategoryColor } from '../utils/categoryColors'
+
+const inputCls =
+  "w-full bg-[#F1EAD9] border border-[#16131010] rounded-xl px-4 py-3 text-[#161310] text-[15px] placeholder-[#3B342B]/35 focus:outline-none focus:border-[#EE5688] focus:ring-2 focus:ring-[#EE5688]/15 focus:bg-white transition-all"
 
 export default function CreateJobPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     title: '',
     company: '',
@@ -13,121 +18,212 @@ export default function CreateJobPage() {
     type: 'full-time',
     salary: '',
     totalSlots: '',
-  });
-  const [requirements, setRequirements] = useState([]);
-  const [tagInput, setTagInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [createdJob, setCreatedJob] = useState(null);
+  })
+  const [requirements, setRequirements] = useState([])
+  const [tagInput, setTagInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState('')
+  const [createdJob, setCreatedJob] = useState(null)
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    setFormData(p => ({ ...p, [e.target.name]: e.target.value }))
+    setError('')
+  }
 
   const handleTagKeyDown = (e) => {
     if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault();
-      setRequirements([...requirements, tagInput.trim()]);
-      setTagInput('');
+      e.preventDefault()
+      setRequirements([...requirements, tagInput.trim()])
+      setTagInput('')
     }
-  };
+  }
 
   const removeTag = (index) => {
-    setRequirements(requirements.filter((_, i) => i !== index));
-  };
+    setRequirements(requirements.filter((_, i) => i !== index))
+  }
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+    e.preventDefault()
+    if (requirements.length === 0) {
+      setError('Add at least one requirement.')
+      return
+    }
+    setLoading(true)
+    setError('')
 
     api.post('/jobs', { ...formData, requirements })
       .then(res => setCreatedJob(res.data.job))
-      .catch(err => setError(err.response?.data?.message || 'Something went wrong'))
-      .finally(() => setLoading(false));
-  };
-
-  if (createdJob) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow p-8 max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Job Created!</h2>
-          <p className="text-gray-500 mb-4">AI assigned category:</p>
-          <span className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-semibold">
-            {createdJob.category}
-          </span>
-          <button
-            onClick={() => navigate('/recruiter/dashboard')}
-            className="mt-6 block w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-          >
-            Back to Dashboard
-          </button>
-        </div>
-      </div>
-    );
+      .catch(err => setError(err.response?.data?.message || 'Failed to create job.'))
+      .finally(() => setLoading(false))
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Create Job</h1>
-
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-
-          <input name="title" value={formData.title} onChange={handleChange} placeholder="Job Title" required
-            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-
-          <input name="company" value={formData.company} onChange={handleChange} placeholder="Company" required
-            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-
-          <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required rows={4}
-            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-
-          <input name="location" value={formData.location} onChange={handleChange} placeholder="Location" required
-            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-
-          <select name="type" value={formData.type} onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
-            <option value="full-time">Full-time</option>
-            <option value="part-time">Part-time</option>
-            <option value="internship">Internship</option>
-          </select>
-
-          <input name="salary" value={formData.salary} onChange={handleChange} placeholder="Salary (optional)"
-            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-
-          <input name="totalSlots" value={formData.totalSlots} onChange={handleChange} placeholder="Total Slots" required type="number"
-            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-
-          {/* Requirements Tag Input */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Requirements</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {requirements.map((req, i) => (
-                <span key={i} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                  {req}
-                  <button type="button" onClick={() => removeTag(i)} className="text-blue-400 hover:text-red-500 font-bold">×</button>
-                </span>
-              ))}
+  /* ── Success screen ── */
+  if (createdJob) {
+    const { bg, text, dot } = getCategoryColor(createdJob.category || 'Other')
+    return (
+      <div className="min-h-screen bg-[#F1EAD9] flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="bg-white rounded-[28px] p-10 max-w-md w-full text-center border border-[#16131010]">
+            <div className="w-16 h-16 rounded-2xl bg-[#DCFCE7] border border-green-200 flex items-center justify-center text-3xl mx-auto mb-5">
+              ✓
             </div>
-            <input
-              value={tagInput}
-              onChange={e => setTagInput(e.target.value)}
-              onKeyDown={handleTagKeyDown}
-              placeholder="Type a requirement and press Enter"
-              className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
+            <p className="font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#3B342B]/40 mb-3">
+              // posted live
+            </p>
+            <h2 className="font-['Space_Grotesk'] font-bold text-[28px] text-[#161310] mb-2">
+              Role posted!
+            </h2>
+            <p className="text-[#3B342B] mb-5">
+              Our AI scanned the job and assigned it a category.
+            </p>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full font-['JetBrains_Mono'] font-medium px-3 py-1.5 text-[12px]"
+              style={{ background: bg, color: text }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dot }} />
+              {createdJob.category || 'Other'}
+            </span>
+            <div className="flex gap-3 mt-7">
+              <button
+                onClick={() => navigate('/recruiter/dashboard')}
+                className="flex-1 bg-[#161310] text-[#F1EAD9] font-bold py-3.5 rounded-full hover:bg-black transition-colors"
+              >
+                Back to dashboard →
+              </button>
+              <button
+                onClick={() => { setCreatedJob(null); setFormData({ title:'', company:'', description:'', location:'', type:'full-time', salary:'', totalSlots:'' }); setRequirements([]) }}
+                className="bg-[#F1EAD9] text-[#161310] font-semibold px-5 py-3.5 rounded-full hover:bg-[#E9E0CB] border border-[#16131015] transition-colors"
+              >
+                Post another
+              </button>
+            </div>
           </div>
-
-          <button type="submit" disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
-            {loading ? <Spinner /> : 'Create Job'}
-          </button>
-
-        </form>
+        </main>
+        <Footer />
       </div>
+    )
+  }
+
+  /* ── Form ── */
+  return (
+    <div className="min-h-screen bg-[#F1EAD9] flex flex-col">
+      <Navbar />
+      <main className="flex-1 max-w-2xl w-full mx-auto px-6 py-10">
+        <Link
+          to="/recruiter/dashboard"
+          className="font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#3B342B]/50 hover:text-[#161310] transition-colors inline-flex items-center gap-1.5 mb-6 no-underline"
+        >
+          ← Back to dashboard
+        </Link>
+
+        <div className="flex items-baseline gap-3 flex-wrap mb-2">
+          <h1 className="font-['Space_Grotesk'] font-bold text-[36px] text-[#161310] leading-tight tracking-tight m-0">
+            Post a role.
+          </h1>
+          <span className="font-['Cairo'] font-black text-[28px] text-[#3B342B]/25">وظيفة جديدة</span>
+        </div>
+        <p className="text-[#3B342B] text-sm mb-8">
+          Fill out the role. Our AI will auto-assign a category after you post.
+        </p>
+
+        <div className="bg-white rounded-[28px] p-8 border border-[#16131010]">
+          {error && (
+            <div className="mb-5 p-3.5 bg-[#FEE2E2] border border-red-200 rounded-xl text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-[#161310] mb-1.5">Job title</label>
+              <input name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Senior Frontend Engineer" required className={inputCls} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-[#161310] mb-1.5">Company</label>
+              <input name="company" value={formData.company} onChange={handleChange} placeholder="e.g. Instabug" required className={inputCls} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-[#161310] mb-1.5">Description</label>
+              <textarea name="description" value={formData.description} onChange={handleChange} placeholder="What does this role do? What's the team like?" required rows={5} className={inputCls} />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-[#161310] mb-1.5">Location</label>
+                <input name="location" value={formData.location} onChange={handleChange} placeholder="Cairo, Remote…" required className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-[#161310] mb-1.5">Type</label>
+                <select name="type" value={formData.type} onChange={handleChange} className={inputCls}>
+                  <option value="full-time">Full-time</option>
+                  <option value="part-time">Part-time</option>
+                  <option value="internship">Internship</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-[#161310] mb-1.5">Salary <span className="text-[#3B342B]/50 font-normal">(optional)</span></label>
+                <input name="salary" type="number" value={formData.salary} onChange={handleChange} placeholder="EGP / month" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-[#161310] mb-1.5">Total slots</label>
+                <input name="totalSlots" type="number" min="1" value={formData.totalSlots} onChange={handleChange} placeholder="How many to hire" required className={inputCls} />
+              </div>
+            </div>
+
+            {/* Requirements */}
+            <div>
+              <label className="block text-sm font-semibold text-[#161310] mb-1.5">Requirements</label>
+              <p className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-wider text-[#3B342B]/40 mb-2">
+                Press Enter to add each one.
+              </p>
+              {requirements.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {requirements.map((req, i) => (
+                    <span key={i} className="inline-flex items-center gap-1.5 bg-[#FDE9DC] text-[#E96A3A] text-sm font-medium px-3 py-1.5 rounded-full border border-[#E96A3A]/20">
+                      {req}
+                      <button type="button" onClick={() => removeTag(i)} className="text-[#E96A3A]/50 hover:text-[#E96A3A] transition-colors leading-none text-base" aria-label={`Remove ${req}`}>
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <input
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                placeholder="e.g. React, TypeScript, 2+ years experience…"
+                className={inputCls}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-[#161310] text-[#F1EAD9] font-bold py-3.5 rounded-full flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-60"
+              >
+                {loading
+                  ? <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block" /> Posting…</>
+                  : 'Post role →'}
+              </button>
+              <Link
+                to="/recruiter/dashboard"
+                className="bg-[#F1EAD9] text-[#161310] font-semibold px-5 py-3.5 rounded-full hover:bg-[#E9E0CB] transition-colors border border-[#16131015] no-underline"
+              >
+                Cancel
+              </Link>
+            </div>
+          </form>
+        </div>
+      </main>
+      <Footer />
     </div>
-  );
+  )
 }

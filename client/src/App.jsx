@@ -15,6 +15,10 @@ import PendingRecruitersPage from './pages/PendingRecruitersPage'
 import RecommendedJobsPage from './pages/RecommendedJobsPage'
 import SavedJobsPage from './pages/SavedJobsPage'
 import MyApplicationsPage from './pages/MyApplicationsPage'
+import RecruiterDashboard from './pages/RecruiterDashboard'
+import CreateJobPage from './pages/CreateJobPage'
+import EditJobPage from './pages/EditJobPage'
+import AdminDashboard from './pages/AdminDashboard'
 
 function App() {
   return (
@@ -66,17 +70,17 @@ function App() {
           {/* Recruiter Routes */}
           <Route path="/recruiter/dashboard" element={
             <RoleRoute roles={['recruiter']}>
-              <div>RecruiterDashboard</div>
+              <RecruiterDashboard />
             </RoleRoute>
           } />
           <Route path="/recruiter/jobs/create" element={
             <RoleRoute roles={['recruiter']}>
-              <div>CreateJobPage</div>
+              <CreateJobPage />
             </RoleRoute>
           } />
           <Route path="/recruiter/jobs/:id/edit" element={
             <RoleRoute roles={['recruiter']}>
-              <div>EditJobPage</div>
+              <EditJobPage />
             </RoleRoute>
           } />
           <Route path="/recruiter/applicants/:jobId" element={
@@ -88,7 +92,7 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin/dashboard" element={
             <RoleRoute roles={['admin']}>
-              <div>AdminDashboard</div>
+              <AdminDashboard />
             </RoleRoute>
           } />
           <Route path="/admin/recruiters" element={
