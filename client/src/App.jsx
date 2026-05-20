@@ -1,3 +1,5 @@
+import AdminJobsPage from './pages/AdminJobsPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
@@ -96,12 +98,12 @@ function App() {
           } />
           <Route path="/admin/jobs" element={
             <RoleRoute roles={['admin']}>
-              <div>AdminJobsPage</div>
+              <AdminJobsPage />
             </RoleRoute>
           } />
           <Route path="/admin/users" element={
             <RoleRoute roles={['admin']}>
-              <div>AdminUsersPage</div>
+              <AdminUsersPage />
             </RoleRoute>
           } />
 
