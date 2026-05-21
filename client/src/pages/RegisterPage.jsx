@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import Spinner from '../components/Spinner'
@@ -14,8 +14,14 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [pendingRecruiter, setPendingRecruiter] = useState(false)
-  const { login } = useAuth()
+  const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
+
+  if (isAuthenticated && !pendingRecruiter) {
+    if (user?.role === 'admin')          return <Navigate to="/admin/dashboard" replace />
+    if (user?.role === 'recruiter')      return <Navigate to="/recruiter/jobs/create" replace />
+    return <Navigate to="/jobs" replace />
+  }
 
   const onChange = (e) => { setForm(p => ({ ...p, [e.target.name]: e.target.value })); setError('') }
 
