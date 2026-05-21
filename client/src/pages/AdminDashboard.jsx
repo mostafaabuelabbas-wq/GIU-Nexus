@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import api from '../services/api'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import CategoryBadge from '../components/CategoryBadge'
+import { getCategoryColor } from '../utils/categoryColors'
 import Spinner from '../components/Spinner'
 
 export default function AdminDashboard() {
@@ -243,7 +243,11 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           <span className="text-[#3B342B] text-xs">{job.company}</span>
-                          {job.category && <CategoryBadge category={job.category} size="sm" />}
+                          {job.category && (() => { const { bg, text, dot } = getCategoryColor(job.category); return (
+                            <span className="inline-flex items-center gap-1.5 rounded-full font-['JetBrains_Mono'] font-medium px-2.5 py-0.5 text-[11px]" style={{ background: bg, color: text }}>
+                              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dot }} />{job.category}
+                            </span>
+                          )})()}
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
