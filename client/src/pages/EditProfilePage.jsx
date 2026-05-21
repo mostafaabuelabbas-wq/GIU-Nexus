@@ -22,8 +22,9 @@ export default function EditProfilePage() {
   useEffect(() => {
     api.get('/profile')
       .then(({ data }) => {
-        setForm({ name: data.name || '', bio: data.bio || '' })
-        setPreviewUrl(data.profilePicture || null)
+        const user = data.user || data
+        setForm({ name: user.name || '', bio: user.bio || '' })
+        setPreviewUrl(user.profilePicture || null)
         setLoading(false)
       })
       .catch(() => setLoading(false))

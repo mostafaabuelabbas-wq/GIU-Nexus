@@ -21,7 +21,7 @@ export default function ProfilePage() {
   useEffect(() => {
     let cancelled = false
     api.get('/profile')
-      .then(({ data }) => { if (!cancelled) { setProfile(data); setLoading(false) } })
+      .then(({ data }) => { if (!cancelled) { setProfile(data.user || data); setLoading(false) } })
       .catch(err => { if (!cancelled) { setError(err.response?.data?.message || 'Failed to load profile.'); setLoading(false) } })
     return () => { cancelled = true }
   }, [])
