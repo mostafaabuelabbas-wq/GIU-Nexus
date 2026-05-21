@@ -6,6 +6,8 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 const TYPES    = [{ v:'', l:'All types' },{ v:'full-time', l:'Full-time' },{ v:'part-time', l:'Part-time' },{ v:'internship', l:'Internship' }]
 const STATUSES = [{ v:'open', l:'Open' },{ v:'', l:'All statuses' },{ v:'closed', l:'Closed' }]
+const EXP_LEVELS = [{ v:'', l:'All levels' },{ v:'entry', l:'Entry' },{ v:'mid', l:'Mid' },{ v:'senior', l:'Senior' }]
+const WORK_MODES = [{ v:'', l:'All modes' },{ v:'remote', l:'Remote' },{ v:'hybrid', l:'Hybrid' },{ v:'onsite', l:'On-site' }]
 const LIMIT = 9
 
 const unwrap = (data) => Array.isArray(data) ? data : data?.jobs ?? data?.data ?? data?.results ?? []
@@ -19,10 +21,12 @@ export default function JobListPage() {
   const [error, setError]   = useState('')
 
   const [filters, setFilters] = useState({
-    keyword:  searchParams.get('keyword')  || '',
-    location: searchParams.get('location') || '',
-    type:     searchParams.get('type')     || '',
-    status:   searchParams.get('status')   || 'open',
+    keyword:        searchParams.get('keyword')        || '',
+    location:       searchParams.get('location')       || '',
+    type:           searchParams.get('type')           || '',
+    status:         searchParams.get('status')         || 'open',
+    experienceLevel: searchParams.get('experienceLevel') || '',
+    workMode:        searchParams.get('workMode')        || '',
   })
   const [draft, setDraft] = useState(filters)
 
@@ -52,20 +56,22 @@ export default function JobListPage() {
     e.preventDefault()
     setFilters(draft); setPage(1)
     const sp = {}
-    if (draft.keyword)  sp.keyword  = draft.keyword
-    if (draft.location) sp.location = draft.location
-    if (draft.type)     sp.type     = draft.type
-    if (draft.status)   sp.status   = draft.status
+    if (draft.keyword)         sp.keyword         = draft.keyword
+    if (draft.location)        sp.location        = draft.location
+    if (draft.type)            sp.type            = draft.type
+    if (draft.status)          sp.status          = draft.status
+    if (draft.experienceLevel) sp.experienceLevel = draft.experienceLevel
+    if (draft.workMode)        sp.workMode        = draft.workMode
     setSearchParams(sp)
   }
 
   const clearFilters = () => {
-    const blank = { keyword:'', location:'', type:'', status:'open' }
+    const blank = { keyword:'', location:'', type:'', status:'open', experienceLevel:'', workMode:'' }
     setDraft(blank); setFilters(blank); setPage(1)
     setSearchParams({})
   }
 
-  const hasActiveFilters = filters.keyword || filters.location || filters.type
+  const hasActiveFilters = filters.keyword || filters.location || filters.type || filters.experienceLevel || filters.workMode
   const totalPages = Math.max(1, Math.ceil(total / LIMIT))
 
   const inputCls = 'w-full bg-[#F1EAD9] border-0 rounded-xl px-4 py-2.5 text-[#161310] text-sm focus:outline-none focus:ring-2 focus:ring-[#EE5688]/20 placeholder-[#3B342B]/35 transition-all'
@@ -107,6 +113,18 @@ export default function JobListPage() {
             <label className="block font-['JetBrains_Mono'] text-[11px] uppercase tracking-wider text-[#3B342B]/50 mb-1.5">Status</label>
             <select value={draft.status} onChange={e => setDraft(p => ({...p, status: e.target.value}))} className={inputCls}>
               {STATUSES.map(s => <option key={s.v} value={s.v}>{s.l}</option>)}
+            </select>
+          </div>
+          <div className="flex-1 min-w-[120px]">
+            <label className="block font-['JetBrains_Mono'] text-[11px] uppercase tracking-wider text-[#3B342B]/50 mb-1.5">Level</label>
+            <select value={draft.experienceLevel} onChange={e => setDraft(p => ({...p, experienceLevel: e.target.value}))} className={inputCls}>
+              {EXP_LEVELS.map(e => <option key={e.v} value={e.v}>{e.l}</option>)}
+            </select>
+          </div>
+          <div className="flex-1 min-w-[120px]">
+            <label className="block font-['JetBrains_Mono'] text-[11px] uppercase tracking-wider text-[#3B342B]/50 mb-1.5">Mode</label>
+            <select value={draft.workMode} onChange={e => setDraft(p => ({...p, workMode: e.target.value}))} className={inputCls}>
+              {WORK_MODES.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
             </select>
           </div>
           <button type="submit"

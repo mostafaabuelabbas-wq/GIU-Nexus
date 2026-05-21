@@ -110,6 +110,13 @@ export default function MyApplicationsPage() {
                       </span>
                     )}
 
+                    {/* Match score */}
+                    {app.matchScore != null && (
+                      <span className="hidden md:inline-flex items-center bg-[#DCFCE7] text-[#15803D] text-[10px] font-['JetBrains_Mono'] font-semibold px-2.5 py-1 rounded-full flex-shrink-0">
+                        {app.matchScore}% match
+                      </span>
+                    )}
+
                     {/* Status badge */}
                     <div className="flex-shrink-0">
                       <ApplicationStatusBadge status={app.status} />

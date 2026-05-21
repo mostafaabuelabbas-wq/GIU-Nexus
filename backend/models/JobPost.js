@@ -126,6 +126,12 @@ const jobPostSchema = new mongoose.Schema(
       min: 0,
     },
 
+    // Soft delete — keeps job data for analytics even after recruiter removes it
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
   },
   {
     timestamps: true,
@@ -138,5 +144,6 @@ jobPostSchema.index({ createdBy: 1 });              // Recruiter dashboard: "sho
 jobPostSchema.index({ createdAt: -1 });              // Default sort: newest jobs first
 jobPostSchema.index({ status: 1, deadline: 1 });     // Filter: "open jobs not yet expired"
 jobPostSchema.index({ experienceLevel: 1, workMode: 1 }); // Filter: "entry-level remote jobs"
+jobPostSchema.index({ isActive: 1, status: 1 });    // Soft delete + status combined filter
 
 module.exports = mongoose.model("JobPost", jobPostSchema);

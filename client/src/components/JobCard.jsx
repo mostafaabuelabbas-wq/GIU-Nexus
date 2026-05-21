@@ -4,7 +4,20 @@ import SaveJobButton from './SaveJobButton'
 
 const TYPE_LABEL = { 'full-time': 'Full-time', 'part-time': 'Part-time', 'internship': 'Internship' }
 const MODE_LABEL = { remote: 'Remote', hybrid: 'Hybrid', onsite: 'On-site' }
+const EXP_LABEL  = { entry: 'Entry', mid: 'Mid-level', senior: 'Senior' }
 const PALETTE = ['#2F4A2E', '#EE5688', '#E96A3A', '#E5A93A', '#5A3A6B', '#2A6FDB', '#4A7873']
+
+const fmtDeadline = (d) => {
+  if (!d) return null
+  const date = new Date(d)
+  if (isNaN(date)) return null
+  const now = new Date()
+  const days = Math.ceil((date - now) / 86400000)
+  if (days < 0) return null
+  if (days === 0) return 'Closes today'
+  if (days <= 7) return `Closes in ${days}d`
+  return `Closes ${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+}
 
 const colorFor = (str = '') => {
   let h = 0
@@ -20,6 +33,8 @@ export default function JobCard({ job, score, showSaveButton }) {
   const initial = (job.company || '?')[0].toUpperCase()
   const matchPct = typeof score === 'number' ? Math.round(score * 100) : null
   const showSave = showSaveButton !== false && matchPct === null
+  const deadlineLabel = fmtDeadline(job.deadline)
+  const urgentDeadline = deadlineLabel && deadlineLabel.includes('today')
 
   return (
     <article className="bg-white rounded-[28px] p-5 flex flex-col gap-3 border border-[#16131010] hover:-translate-y-0.5 transition-transform group relative overflow-hidden">
@@ -74,7 +89,22 @@ export default function JobCard({ job, score, showSaveButton }) {
             <span className="text-[#3B342B] text-xs">{MODE_LABEL[job.workMode] ?? job.workMode}</span>
           </>
         )}
+        {job.experienceLevel && (
+          <>
+            <span className="text-[#3B342B]/40 text-xs">·</span>
+            <span className="text-[#3B342B] text-xs">{EXP_LABEL[job.experienceLevel] ?? job.experienceLevel}</span>
+          </>
+        )}
       </div>
+
+      {/* Deadline row */}
+      {deadlineLabel && (
+        <div className="flex items-center gap-1.5">
+          <span className={`text-xs font-medium ${urgentDeadline ? 'text-[#B91C1C]' : 'text-[#3B342B]/50'}`}>
+            ⏱ {deadlineLabel}
+          </span>
+        </div>
+      )}
 
       {/* Footer row */}
       <div className="flex items-center justify-between pt-2 mt-auto border-t border-[#16131008]">
