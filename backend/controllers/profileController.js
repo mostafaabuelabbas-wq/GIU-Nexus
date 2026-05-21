@@ -117,7 +117,7 @@ const skills = [
   ...new Set(
     result
       .filter((e) =>
-        ["MISC", "ORG", "B-MISC", "I-MISC", "B-ORG"].includes(
+        ["MISC", "B-MISC", "I-MISC"].includes(
           e.entity_group
         )
       )

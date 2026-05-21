@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
@@ -16,9 +16,21 @@ function BrandMark() {
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const menuRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+
+  const scrollToSection = (id) => {
+    if (location.pathname === '/') {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      navigate('/')
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+    }
+  }
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20)
@@ -44,7 +56,7 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="sticky top-[18px] z-50 flex justify-center px-6 mt-[18px]">
+      <div className="sticky top-[32px] z-50 flex justify-center px-6 mt-[32px]">
         <nav className={cx(
           'flex items-center gap-2 rounded-full py-2 pl-[22px] pr-2 w-full max-w-[1280px] transition-all',
           'bg-white shadow-[0_1px_0_rgba(0,0,0,0.03),0_12px_40px_-28px_rgba(0,0,0,0.25)]',
@@ -62,8 +74,8 @@ export default function Navbar() {
             {!isAuthenticated && (
               <>
                 <NavLink to="/jobs" className={linkClass}>Find jobs</NavLink>
-                <a href="#manifesto" className="text-[#161310] font-medium text-[15px] px-3.5 py-2.5 rounded-full hover:bg-[#F1EAD9] transition-colors hidden md:block">Manifesto</a>
-                <a href="#how" className="text-[#161310] font-medium text-[15px] px-3.5 py-2.5 rounded-full hover:bg-[#F1EAD9] transition-colors hidden md:block">How it works</a>
+                <button type="button" onClick={() => scrollToSection('manifesto')} className="text-[#161310] font-medium text-[15px] px-3.5 py-2.5 rounded-full hover:bg-[#F1EAD9] transition-colors hidden md:block bg-transparent border-0 cursor-pointer">Manifesto</button>
+                <button type="button" onClick={() => scrollToSection('how-it-works')} className="text-[#161310] font-medium text-[15px] px-3.5 py-2.5 rounded-full hover:bg-[#F1EAD9] transition-colors hidden md:block bg-transparent border-0 cursor-pointer">How it works</button>
               </>
             )}
             {role === 'jobSeeker' && (

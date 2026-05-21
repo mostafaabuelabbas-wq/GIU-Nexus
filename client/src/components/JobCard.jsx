@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import CategoryBadge from './CategoryBadge'
+import { getCategoryColor } from '../utils/categoryColors'
 import SaveJobButton from './SaveJobButton'
 
 const TYPE_LABEL = { 'full-time': 'Full-time', 'part-time': 'Part-time', 'internship': 'Internship' }
@@ -70,7 +70,11 @@ export default function JobCard({ job, score, showSaveButton }) {
 
       {/* Meta row */}
       <div className="flex flex-wrap items-center gap-2">
-        <CategoryBadge category={job.category} size="sm" />
+        {job.category && (() => { const { bg, text, dot } = getCategoryColor(job.category); return (
+          <span className="inline-flex items-center gap-1.5 rounded-full font-['JetBrains_Mono'] font-medium px-2.5 py-0.5 text-[11px]" style={{ background: bg, color: text }}>
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dot }} />{job.category}
+          </span>
+        )})()}
         <span className="text-[#3B342B]/40 text-xs">·</span>
         <span className="text-[#3B342B] text-xs">{job.location}</span>
         {job.type && (

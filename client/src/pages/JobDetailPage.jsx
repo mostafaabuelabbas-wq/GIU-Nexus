@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import CategoryBadge from '../components/CategoryBadge'
+import { getCategoryColor } from '../utils/categoryColors'
 import ApplicationStatusBadge from '../components/ApplicationStatusBadge'
 import SaveJobButton from '../components/SaveJobButton'
 import Modal from '../components/Modal'
@@ -107,7 +107,11 @@ export default function JobDetailPage() {
                     <SaveJobButton jobId={job._id} initialSaved={job.saved} jobStatus={job.status} />
                   </div>
                   <div className="flex flex-wrap items-center gap-3 mt-4">
-                    <CategoryBadge category={job.category} />
+                    {job.category && (() => { const { bg, text, dot } = getCategoryColor(job.category); return (
+                      <span className="inline-flex items-center gap-1.5 rounded-full font-['JetBrains_Mono'] font-medium px-3 py-1 text-xs" style={{ background: bg, color: text }}>
+                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dot }} />{job.category}
+                      </span>
+                    )})()}
                     <span className="text-[#3B342B] text-sm">📍 {job.location}</span>
                     {job.type && <span className="bg-[#F1EAD9] text-[#161310] text-xs font-medium px-3 py-1 rounded-full">{TYPE_LABEL[job.type] ?? job.type}</span>}
                     {job.workMode && <span className="bg-[#F1EAD9] text-[#161310] text-xs font-medium px-3 py-1 rounded-full capitalize">{job.workMode}</span>}
@@ -205,7 +209,7 @@ export default function JobDetailPage() {
 
       {/* Apply modal */}
       <Modal
-        isOpen={applyModal}
+        open={applyModal}
         title={`Apply for ${job.title}`}
         confirmLabel={applying ? 'Applying…' : 'Submit application'}
         loading={applying}

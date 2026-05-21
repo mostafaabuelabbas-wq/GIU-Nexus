@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function BrandMark() {
   return (
@@ -35,6 +36,11 @@ function FooterCol({ title, links }) {
 }
 
 export default function Footer() {
+  const { user } = useAuth()
+  const postRoleHref = user?.role === 'recruiter'
+    ? '/recruiter/jobs/create'
+    : '/register?role=recruiter'
+
   return (
     <footer className="bg-[#F1EAD9] text-[#161310] overflow-hidden">
       <div className="max-w-[1360px] mx-auto px-10 pt-20 pb-14">
@@ -59,7 +65,7 @@ export default function Footer() {
             ['AI skill scan', '/profile'],
           ]} />
           <FooterCol title="For employers" links={[
-            ['Post a role', '/register?role=recruiter'],
+            ['Post a role', postRoleHref],
             ['Recruiter login', '/login'],
             ['Book a demo', 'mailto:hello@giu-nexus.eg'],
           ]} />

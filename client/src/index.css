@@ -16,7 +16,7 @@
     --ochre:   #E5A93A;
     --line:    #1613101A;
   }
-  html { background-color: #F1EAD9; }
+  html { background-color: #F1EAD9; scroll-behavior: smooth; }
   body {
     background-color: #F1EAD9;
     color: #161310;
