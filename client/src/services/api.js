@@ -15,7 +15,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const url = error.config?.url || ''
-    if (error.response?.status === 401 && !url.startsWith('/auth/')) {
+    if (error.response?.status === 401 && !url.startsWith('/auth/') && !url.includes('/change-password')) {
       removeToken()
       removeUser()
       window.location.href = '/login'

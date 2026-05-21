@@ -14,6 +14,7 @@ export default function EditProfilePage() {
   const [form, setForm] = useState({ name: '', bio: '' })
   const [previewUrl, setPreviewUrl] = useState(null)
   const [file, setFile] = useState(null)
+  const [removePhoto, setRemovePhoto] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -35,6 +36,7 @@ export default function EditProfilePage() {
     if (!f) return
     setFile(f)
     setPreviewUrl(URL.createObjectURL(f))
+    setRemovePhoto(false)
   }
 
   const onSubmit = async (e) => {
@@ -46,6 +48,7 @@ export default function EditProfilePage() {
       fd.append('name', form.name)
       fd.append('bio', form.bio)
       if (file) fd.append('profilePicture', file)
+      else if (removePhoto) fd.append('profilePicture', '')
       await api.patch('/profile', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       setSaved(true)
       setTimeout(() => navigate('/profile'), 1500)
@@ -91,12 +94,21 @@ export default function EditProfilePage() {
                       ? <img src={previewUrl} alt="preview" className="w-full h-full object-cover" />
                       : initial}
                   </div>
-                  <div>
-                    <button type="button" onClick={() => fileRef.current?.click()}
-                      className="bg-[#F1EAD9] text-[#161310] font-semibold text-sm px-4 py-2.5 rounded-full hover:bg-[#E9E0CB] transition-colors border border-[#16131015]">
-                      Upload photo
-                    </button>
-                    <p className="text-xs text-[#3B342B]/50 mt-2">JPG, PNG or WebP · max 5 MB</p>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={() => fileRef.current?.click()}
+                        className="bg-[#F1EAD9] text-[#161310] font-semibold text-sm px-4 py-2.5 rounded-full hover:bg-[#E9E0CB] transition-colors border border-[#16131015]">
+                        Upload photo
+                      </button>
+                      {previewUrl && (
+                        <button type="button"
+                          onClick={() => { setPreviewUrl(null); setFile(null); setRemovePhoto(true) }}
+                          className="text-sm font-semibold text-red-500 hover:text-red-700 transition-colors px-3 py-2.5">
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#3B342B]/50">JPG, PNG or WebP · max 5 MB</p>
                   </div>
                   <input ref={fileRef} type="file" accept="image/*" onChange={onFileChange} className="hidden" />
                 </div>

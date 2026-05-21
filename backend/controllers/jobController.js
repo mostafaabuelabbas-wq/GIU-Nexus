@@ -124,6 +124,12 @@ exports.getAllJobs = async (req, res, next) => {
     if (experienceLevel) filter.experienceLevel = experienceLevel;
     if (workMode) filter.workMode = workMode;
 
+    if (req.user?.role === 'jobSeeker') {
+      const applied = await Application.find({ user: req.user._id }).select('job');
+      const appliedIds = applied.map(a => a.job);
+      if (appliedIds.length) filter._id = { $nin: appliedIds };
+    }
+
     const skip = (Number(page) - 1) * Number(limit);
     const total = await JobPost.countDocuments(filter);
     const jobs = await JobPost.find(filter).skip(skip).limit(Number(limit));
@@ -419,11 +425,21 @@ exports.getSavedJobs = async (req, res, next) => {
 // GET /api/v1/jobs/recommended — Job Seeker only
 exports.getRecommendedJobs = async (req, res, next) => {
   try {
+    if (!req.user.skills || req.user.skills.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No skills extracted yet. Add a bio and extract skills first.',
+      });
+    }
+
     const studentText = (req.user.skills || []).join(", ");
+
+    const applied = await Application.find({ user: req.user._id }).select('job');
+    const appliedIds = applied.map(a => a.job);
 
     const [userFull, jobs] = await Promise.all([
       User.findById(req.user._id).select("+embedding"),
-      JobPost.find({ status: "open" }).select("+embedding"),
+      JobPost.find({ status: "open", ...(appliedIds.length && { _id: { $nin: appliedIds } }) }).select("+embedding"),
     ]);
 
     if (jobs.length === 0) {
@@ -474,7 +490,7 @@ exports.getRecommendedJobs = async (req, res, next) => {
     const scoredJobs = jobs.map((job) => {
       const idx = jobEmbedIdxMap[job._id.toString()];
       const jobVector = idx !== undefined ? freshVectors[idx] : job.embedding;
-      const similarity = cosineSimilarity(userVector, jobVector);
+      const similarity = Math.max(0, cosineSimilarity(userVector, jobVector));
       return { ...job.toObject(), score: similarity };
     });
 
@@ -483,7 +499,9 @@ exports.getRecommendedJobs = async (req, res, next) => {
     res.status(200).json({ success: true, jobs: scoredJobs });
   } catch (error) {
     console.error("HF recommendations failed:", error.message);
-    const jobs = await JobPost.find({ status: "open" });
+    const applied = await Application.find({ user: req.user._id }).select('job').catch(() => []);
+    const appliedIds = applied.map(a => a.job);
+    const jobs = await JobPost.find({ status: "open", ...(appliedIds.length && { _id: { $nin: appliedIds } }) });
     res.status(200).json({ success: true, jobs });
   }
 };

@@ -94,48 +94,114 @@ exports.extractSkills = async (req, res, next) => {
       });
     }
 
+// Maps lowercase bio text → canonical display name.
+// Sorted longest-first so "tailwind css" matches before "tailwind",
+// "node.js" before "node", etc.
+const TECH_DISPLAY = Object.entries({
+  "react native": "React Native",
+  "tailwind css": "Tailwind CSS",
+  "rest apis": "REST APIs",
+  "rest api": "REST API",
+  "node.js": "Node.js",
+  "next.js": "Next.js",
+  "vue.js": "Vue.js",
+  "scikit-learn": "Scikit-learn",
+  "mongodb": "MongoDB",
+  "postgresql": "PostgreSQL",
+  "typescript": "TypeScript",
+  "javascript": "JavaScript",
+  "tensorflow": "TensorFlow",
+  "pytorch": "PyTorch",
+  "graphql": "GraphQL",
+  "tailwind": "Tailwind CSS",
+  "nextjs": "Next.js",
+  "nodejs": "Node.js",
+  "vuejs": "Vue.js",
+  "express": "Express",
+  "angular": "Angular",
+  "svelte": "Svelte",
+  "python": "Python",
+  "django": "Django",
+  "fastapi": "FastAPI",
+  "flutter": "Flutter",
+  "docker": "Docker",
+  "kubernetes": "Kubernetes",
+  "firebase": "Firebase",
+  "supabase": "Supabase",
+  "redis": "Redis",
+  "mysql": "MySQL",
+  "sqlite": "SQLite",
+  "kotlin": "Kotlin",
+  "golang": "Go",
+  "react": "React",
+  "flask": "Flask",
+  "spring": "Spring",
+  "laravel": "Laravel",
+  "swift": "Swift",
+  "scala": "Scala",
+  "pandas": "Pandas",
+  "numpy": "NumPy",
+  "opencv": "OpenCV",
+  "nginx": "Nginx",
+  "kafka": "Kafka",
+  "figma": "Figma",
+  "jest": "Jest",
+  "vite": "Vite",
+  "webpack": "Webpack",
+  "rust": "Rust",
+  "ruby": "Ruby",
+  "azure": "Azure",
+  "linux": "Linux",
+  "html": "HTML",
+  "sass": "Sass",
+  "aws": "AWS",
+  "gcp": "GCP",
+  "git": "Git",
+  "php": "PHP",
+  "css": "CSS",
+  "sql": "SQL",
+  "c++": "C++",
+  "c#": "C#",
+}).sort((a, b) => b[0].length - a[0].length);
+
+// WordPiece tokenization artifacts — never valid skills
+const ARTIFACTS = new Set(["goDB", "oDB", "Mon"]);
+
+function scanBioForSkills(bio) {
+  const found = new Set();
+  for (const [kw, display] of TECH_DISPLAY) {
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`(?<![\\w.])${escaped}(?![\\w.])`, "i").test(bio)) {
+      found.add(display);
+    }
+  }
+  return [...found];
+}
+
 const result = await hf.tokenClassification({
   model: "dslim/bert-base-NER",
   inputs: user.bio,
 });
 
-let extractedWords = result.map((e) =>
-  e.word.replace("##", "")
-);
-
-for (let i = 0; i < extractedWords.length - 1; i++) {
-  if (
-    extractedWords[i] === "Mon" &&
-    extractedWords[i + 1] === "goDB"
-  ) {
-    extractedWords[i] = "MongoDB";
-    extractedWords.splice(i + 1, 1);
-  }
-}
-
-const skills = [
+// NER: keep only MISC entities, strip WordPiece prefixes, drop artifacts
+const nerSkills = [
   ...new Set(
     result
-      .filter((e) =>
-        ["MISC", "B-MISC", "I-MISC"].includes(
-          e.entity_group
-        )
-      )
-      .map((e) => e.word.replace("##", ""))
-      .map((word, index, arr) => {
-        if (word === "Mon" && arr[index + 1] === "goDB") {
-          return "MongoDB";
-        }
-        return word;
-      })
-      .filter(
-        (word, index, arr) =>
-          word.length > 2 &&
-          /^[a-zA-Z0-9.+#-]+$/.test(word) &&
-          !(word === "goDB" && arr[index - 1] === "MongoDB")
+      .filter((e) => ["MISC", "B-MISC", "I-MISC"].includes(e.entity_group))
+      .map((e) => e.word.replace(/^##/, ""))
+      .filter((word) =>
+        !ARTIFACTS.has(word) &&
+        word.length > 2 &&
+        /^[a-zA-Z0-9.+#-]+$/.test(word)
       )
   ),
 ];
+
+// Direct bio scan catches ORG-tagged tech (MongoDB, Node.js, etc.) and
+// multi-word phrases (Tailwind CSS, REST APIs) the NER model misses
+const bioSkills = scanBioForSkills(user.bio);
+
+const skills = [...new Set([...bioSkills, ...nerSkills])];
 
     // Save extracted skills
     user.skills = skills;

@@ -57,6 +57,22 @@ exports.protect = async (req, res, next) => {
     }
 };
 
+// ─── OPTIONAL PROTECT ────────────────────────────────────────────
+// Like protect but never rejects — attaches req.user if token is valid,
+// otherwise just calls next() so public routes still work.
+exports.optionalProtect = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) return next();
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.jti && blacklistedTokens.has(decoded.jti)) return next();
+        const user = await User.findById(decoded._id);
+        if (user && user.isActive) req.user = user;
+    } catch (_) { /* invalid token — treat as unauthenticated */ }
+    next();
+};
+
 // ─── AUTHORIZE ───────────────────────────────────────────────────
 // Always used AFTER protect
 // Checks if the logged-in user has the right role

@@ -61,18 +61,20 @@ export default function ChangePasswordPage() {
           )}
 
           {error && (
-            <div className="mb-5 p-3.5 bg-[#FEE2E2] border border-red-200 rounded-xl text-red-700 text-sm flex items-center justify-between gap-3 flex-wrap">
-              <span>{error}</span>
-              {error.includes('incorrect') && (
-                <Link to="/forgot-password" className="font-bold text-red-800 text-xs underline whitespace-nowrap no-underline hover:underline">Forgot it?</Link>
-              )}
+            <div className="mb-5 p-3.5 bg-[#FEE2E2] border border-red-200 rounded-xl text-red-700 text-sm">
+              {error}
             </div>
           )}
 
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
             {fields.map(f => (
               <div key={f.name}>
-                <label className="block text-sm font-semibold text-[#161310] mb-1.5">{f.label}</label>
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <label className="text-sm font-semibold text-[#161310]">{f.label}</label>
+                  {f.name === 'currentPassword' && (
+                    <Link to="/forgot-password" className="font-['JetBrains_Mono'] text-xs text-[#EE5688] hover:underline no-underline">Forgot it?</Link>
+                  )}
+                </div>
                 <div className="relative">
                   <input
                     type={showPw ? 'text' : 'password'}

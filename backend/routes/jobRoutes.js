@@ -3,7 +3,7 @@ const { getJobApplicants } = require('../controllers/applicationController');
 const express = require('express');
 const router = express.Router();
 
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, optionalProtect } = require('../middleware/auth');
 
 const {
   getAllJobs,
@@ -79,7 +79,7 @@ const {
  *       200:
  *         description: Paginated list of jobs
  */
-router.get('/', getAllJobs);
+router.get('/', optionalProtect, getAllJobs);
 
 /**
  * @swagger

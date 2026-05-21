@@ -17,6 +17,7 @@ const colorFor = (s = '') => { let h = 0; for (let i=0;i<s.length;i++) h=(h*31+s
 export default function JobDetailPage() {
   const { id } = useParams()
   const { isAuthenticated, user } = useAuth()
+  const isJobSeeker = user?.role === 'jobSeeker'
   const [job, setJob]         = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState('')
@@ -28,15 +29,22 @@ export default function JobDetailPage() {
 
   useEffect(() => {
     let cancelled = false
-    api.get(`/jobs/${id}`)
-      .then(({ data }) => {
+    const jobReq = api.get(`/jobs/${id}`)
+    const appReq = isJobSeeker ? api.get('/applications/my').catch(() => ({ data: { applications: [] } })) : Promise.resolve({ data: { applications: [] } })
+    Promise.all([jobReq, appReq])
+      .then(([jobRes, appRes]) => {
         if (cancelled) return
-        setJob(data.job ?? data)
+        setJob(jobRes.data.job ?? jobRes.data)
+        const existing = (appRes.data.applications ?? []).find(a => {
+          const jobId = a.job?._id ?? a.job
+          return String(jobId) === String(id)
+        })
+        if (existing) setApplication(existing)
         setLoading(false)
       })
       .catch(err => { if (!cancelled) { setError(err.response?.data?.message || 'Job not found.'); setLoading(false) } })
     return () => { cancelled = true }
-  }, [id])
+  }, [id, isJobSeeker])
 
   const handleApply = async () => {
     setApplying(true); setApplyError('')
@@ -50,8 +58,6 @@ export default function JobDetailPage() {
       setApplying(false)
     }
   }
-
-  const isJobSeeker = user?.role === 'jobSeeker'
 
   if (loading) return (
     <div className="min-h-screen bg-[#F1EAD9] flex flex-col">
