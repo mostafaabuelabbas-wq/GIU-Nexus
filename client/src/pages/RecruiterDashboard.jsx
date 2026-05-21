@@ -64,9 +64,12 @@ export default function RecruiterDashboard() {
       <div className="max-w-[1360px] w-full mx-auto px-10 pt-10 pb-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
+            <p className="font-['JetBrains_Mono'] text-xs uppercase tracking-[0.14em] text-[#3B342B]/50 mb-1">
+              Welcome back, {user?.name?.split(' ')[0] || 'Recruiter'} 👋
+            </p>
             <div className="flex items-baseline gap-3 flex-wrap">
               <h1 className="font-['Space_Grotesk'] font-bold text-[48px] text-[#161310] leading-tight tracking-tight m-0">
-                Recruiter hub.
+                {user?.name || 'Recruiter hub'}.
               </h1>
               <span className="font-['Cairo'] font-black text-[40px] text-[#3B342B]/25">لوحتك</span>
             </div>

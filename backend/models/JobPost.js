@@ -47,7 +47,7 @@ const jobPostSchema = new mongoose.Schema(
     category: {
       type: String,
       enum: {
-        values: ["Frontend", "Backend", "AI/ML", "DevOps", "Data Engineering", "Other"],
+        values: ["Frontend", "Backend", "AI/ML", "DevOps", "Data Engineering", "Other", "Classifying..."],
         message: "{VALUE} is not a valid category",
       },
       default: "Other",

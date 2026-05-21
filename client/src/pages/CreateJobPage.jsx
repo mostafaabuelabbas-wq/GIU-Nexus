@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import Navbar from '../components/Navbar'
@@ -24,6 +24,28 @@ export default function CreateJobPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
   const [createdJob, setCreatedJob] = useState(null)
+  const pollAttemptsRef = useRef(0)
+
+  useEffect(() => {
+    if (!createdJob || createdJob.category !== 'Classifying...') return
+    const interval = setInterval(async () => {
+      pollAttemptsRef.current += 1
+      if (pollAttemptsRef.current >= 10) {
+        setCreatedJob(j => ({ ...j, category: 'Other' }))
+        clearInterval(interval)
+        return
+      }
+      try {
+        const { data } = await api.get(`/jobs/${createdJob._id}`)
+        const fetched = data.job ?? data
+        if (fetched.category !== 'Classifying...') {
+          setCreatedJob(j => ({ ...j, category: fetched.category }))
+          clearInterval(interval)
+        }
+      } catch { /* keep polling */ }
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [createdJob?._id, createdJob?.category])
 
   const handleChange = (e) => {
     setFormData(p => ({ ...p, [e.target.name]: e.target.value }))
@@ -59,7 +81,9 @@ export default function CreateJobPage() {
 
   /* ── Success screen ── */
   if (createdJob) {
-    const { bg, text, dot } = getCategoryColor(createdJob.category || 'Other')
+    const isClassifying = createdJob.category === 'Classifying...'
+    const displayCategory = isClassifying ? 'Other' : (createdJob.category || 'Other')
+    const { bg, text, dot } = getCategoryColor(displayCategory)
     return (
       <div className="min-h-screen bg-[#F1EAD9] flex flex-col">
         <Navbar />
@@ -77,13 +101,20 @@ export default function CreateJobPage() {
             <p className="text-[#3B342B] mb-5">
               Our AI scanned the job and assigned it a category.
             </p>
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full font-['JetBrains_Mono'] font-medium px-3 py-1.5 text-[12px]"
-              style={{ background: bg, color: text }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dot }} />
-              {createdJob.category || 'Other'}
-            </span>
+            {isClassifying ? (
+              <span className="inline-flex items-center gap-2 bg-[#F1EAD9] text-[#3B342B]/60 font-['JetBrains_Mono'] font-medium px-3 py-1.5 rounded-full text-[12px]">
+                <span className="w-3 h-3 rounded-full border-2 border-[#3B342B]/30 border-t-[#EE5688] animate-spin inline-block flex-shrink-0" />
+                AI is classifying...
+              </span>
+            ) : (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full font-['JetBrains_Mono'] font-medium px-3 py-1.5 text-[12px]"
+                style={{ background: bg, color: text }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dot }} />
+                {displayCategory}
+              </span>
+            )}
             <div className="flex gap-3 mt-7">
               <button
                 onClick={() => navigate('/recruiter/dashboard')}

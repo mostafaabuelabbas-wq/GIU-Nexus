@@ -89,7 +89,7 @@ export default function Navbar() {
             {role === 'recruiter' && (
               <>
                 <NavLink to="/recruiter/dashboard" className={linkClass}>Dashboard</NavLink>
-                <NavLink to="/recruiter/jobs/create" className={linkClass}>Post a role</NavLink>
+                {!isPending && <NavLink to="/recruiter/jobs/create" className={linkClass}>Post a role</NavLink>}
               </>
             )}
             {role === 'admin' && (

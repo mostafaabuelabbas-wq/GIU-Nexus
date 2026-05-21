@@ -2,6 +2,7 @@ const JobPost = require("../models/JobPost");
 const Application = require("../models/Application");
 const User = require("../models/User");
 const hf = require("../services/hfService");
+const https = require("https");
 
 function cosineSimilarity(vecA, vecB) {
   const dot = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
@@ -9,23 +10,64 @@ function cosineSimilarity(vecA, vecB) {
   const magB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
   return dot / (magA * magB);
 }
-async function classifyJobCategory(description) {
-  const result = await hf.zeroShotClassification({
-    model: "facebook/bart-large-mnli",
-    inputs: [description],          // ← wrap in array
-    parameters: {
-      candidate_labels: [
-        "Frontend",
-        "Backend",
-        "AI/ML",
-        "DevOps",
-        "Data Engineering",
-        "Other",
-      ],
-    },
-  });
+const CANDIDATE_LABELS = ["Frontend", "Backend", "AI/ML", "DevOps", "Data Engineering", "Other"];
 
-  return result[0].labels[0];      // ← labels (plural), not label
+// The HF SDK v4 zeroShotClassification throws ProviderOutputError on model-loading responses,
+// so we bypass it and call router.huggingface.co directly via https.
+function hfZeroShotRaw(text, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify({
+      inputs: text,
+      parameters: { candidate_labels: CANDIDATE_LABELS },
+    });
+    const req = https.request({
+      hostname: "router.huggingface.co",
+      path: "/hf-inference/models/facebook/bart-large-mnli",
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.HF_TOKEN}`,
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(payload),
+        "X-Wait-For-Model": "true",
+      },
+      timeout: timeoutMs,
+    }, (res) => {
+      let data = "";
+      res.on("data", (c) => { data += c; });
+      res.on("end", () => {
+        try {
+          const parsed = JSON.parse(data);
+          // Response: Array<{label, score}> — take top label
+          if (Array.isArray(parsed) && parsed[0]?.label) {
+            resolve(parsed[0].label);
+          } else {
+            reject(new Error(parsed?.error || "Unexpected HF response shape"));
+          }
+        } catch {
+          reject(new Error("Failed to parse HF response"));
+        }
+      });
+    });
+    req.on("timeout", () => { req.destroy(); reject(new Error(`HF request timed out after ${timeoutMs}ms`)); });
+    req.on("error", reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function classifyJobCategory(description) {
+  try {
+    return await hfZeroShotRaw(description, 90000);
+  } catch (firstErr) {
+    console.error("HF classification attempt 1 failed:", firstErr.message, "— retrying in 2s");
+    await new Promise((r) => setTimeout(r, 2000));
+    try {
+      return await hfZeroShotRaw(description, 90000);
+    } catch (secondErr) {
+      console.error("HF classification attempt 2 failed:", secondErr.message, "— defaulting to Other");
+      return "Other";
+    }
+  }
 }
 // POST /api/v1/jobs — Recruiter only (approved)
 exports.createJob = async (req, res, next) => {
@@ -53,16 +95,6 @@ exports.createJob = async (req, res, next) => {
       deadline,
     } = req.body;
 
-    let category = "Other";
-    try {
-      category = await classifyJobCategory(description);
-    } catch (err) {
-      console.error(
-        "HF classification failed, defaulting to Other:",
-        err.message,
-      );
-    }
-
     const job = await JobPost.create({
       title,
       company,
@@ -72,25 +104,26 @@ exports.createJob = async (req, res, next) => {
       type,
       salary,
       totalSlots,
-      category,
+      category: "Classifying...",
       createdBy: req.user._id,
       ...(experienceLevel && { experienceLevel }),
       ...(workMode && { workMode }),
       ...(deadline && { deadline }),
     });
 
-    // Cache job embedding for the recommendation engine
-    try {
-      const embResult = await hf.featureExtraction({
-        model: "sentence-transformers/all-MiniLM-L6-v2",
-        inputs: [title + " " + (requirements || []).join(", ")],
-      });
-      await JobPost.findByIdAndUpdate(job._id, { embedding: embResult[0] });
-    } catch (embErr) {
-      console.error("Failed to cache job embedding:", embErr.message);
-    }
-
     res.status(201).json({ success: true, job });
+
+    // Background: classify then update category
+    classifyJobCategory(description)
+      .then((category) => JobPost.findByIdAndUpdate(job._id, { category }))
+      .catch((err) => console.error("Background classification failed:", err.message));
+
+    // Background: cache embedding
+    hf.featureExtraction({
+      model: "sentence-transformers/all-MiniLM-L6-v2",
+      inputs: [title + " " + (requirements || []).join(", ")],
+    }).then((embResult) => JobPost.findByIdAndUpdate(job._id, { embedding: embResult[0] }))
+      .catch((err) => console.error("Failed to cache job embedding:", err.message));
   } catch (err) {
     next(err);
   }
