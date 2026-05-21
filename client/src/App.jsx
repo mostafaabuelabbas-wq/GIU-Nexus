@@ -20,6 +20,9 @@ import CreateJobPage from './pages/CreateJobPage'
 import EditJobPage from './pages/EditJobPage'
 import AdminDashboard from './pages/AdminDashboard'
 import ApplicantsPage from './pages/ApplicantsPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
+import ProfilePage from './pages/ProfilePage'
+import EditProfilePage from './pages/EditProfilePage'
 
 function App() {
   return (
@@ -32,7 +35,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password/:token" element={<div>ResetPasswordPage</div>} />
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/jobs" element={<JobListPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
 
@@ -49,12 +52,12 @@ function App() {
           } />
           <Route path="/profile" element={
             <RoleRoute roles={['jobSeeker']}>
-              <div>ProfilePage</div>
+              <ProfilePage />
             </RoleRoute>
           } />
           <Route path="/profile/edit" element={
             <PrivateRoute>
-              <div>EditProfilePage</div>
+              <EditProfilePage />
             </PrivateRoute>
           } />
           <Route path="/profile/change-password" element={
@@ -113,7 +116,7 @@ function App() {
           } />
 
           {/* Fallback */}
-          <Route path="/" element={<Navigate to="/" />} />
+          <Route path="*" element={<Navigate to="/" />} />
 
         </Routes>
       </BrowserRouter>
