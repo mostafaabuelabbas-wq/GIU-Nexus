@@ -121,7 +121,35 @@ async function seed() {
     { user: seekers[4]._id, job: findJob('Junior Data Engineer')._id,       status: 'shortlisted', coverLetter: 'Comfortable in SQL and Python pipelines.' },
   ]
   await Application.insertMany(apps)
-  console.log(`   ✓ ${apps.length} applications created\n`)
+  console.log(`   ✓ ${apps.length} applications created`)
+
+  // ── Sync cached applicantCount on each JobPost ──────────────────────────
+  // The dashboard reads job.applicantCount (cached counter). Bumping it here
+  // so the seed data is internally consistent.
+  const countsByJob = apps.reduce((acc, a) => {
+    const id = String(a.job)
+    acc[id] = (acc[id] || 0) + 1
+    return acc
+  }, {})
+  const updateResults = await Promise.all(
+    Object.entries(countsByJob).map(([jobId, count]) =>
+      JobPost.updateOne({ _id: jobId }, { $set: { applicantCount: count } })
+    )
+  )
+  const totalMatched  = updateResults.reduce((s, r) => s + (r.matchedCount  || 0), 0)
+  const totalModified = updateResults.reduce((s, r) => s + (r.modifiedCount || 0), 0)
+  console.log(`   ✓ applicantCount sync: ${totalMatched} matched, ${totalModified} modified`)
+
+  // Readback — prove the DB actually has the new counts
+  const verifyIds = Object.keys(countsByJob)
+  const verifyJobs = await JobPost.find({ _id: { $in: verifyIds } }).select('title applicantCount')
+  console.log('   ▸ DB readback:')
+  verifyJobs.forEach(j => {
+    const expected = countsByJob[String(j._id)]
+    const ok = j.applicantCount === expected ? '✓' : '✗'
+    console.log(`      ${ok} ${j.title.padEnd(38)} expected=${expected}  actual=${j.applicantCount}`)
+  })
+  console.log()
 
   void admin // silence unused (kept for clarity in summary)
 

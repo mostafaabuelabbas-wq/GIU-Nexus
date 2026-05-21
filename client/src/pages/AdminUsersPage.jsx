@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import Modal from '../components/Modal'
@@ -38,6 +39,7 @@ const selectCls =
     'bg-white border border-[#16131010] rounded-xl px-3 py-2.5 text-[#161310] text-sm focus:outline-none focus:border-[#EE5688] focus:ring-2 focus:ring-[#EE5688]/15 transition-all'
 
 export default function AdminUsersPage() {
+    const { user: currentUser } = useAuth()
     const [users, setUsers] = useState([])
     const [total, setTotal] = useState(0)
     const [page, setPage] = useState(1)
@@ -69,6 +71,9 @@ export default function AdminUsersPage() {
 
     useEffect(() => { load(roleFilter, statusFilter, page) }, [roleFilter, statusFilter, page, load])
 
+    // Hide the logged-in admin from their own user list — can't safely act on yourself.
+    const visibleUsers = users.filter(u => u._id !== currentUser?._id)
+    const visibleTotal = Math.max(0, total - (users.length - visibleUsers.length))
     const totalPages = Math.max(1, Math.ceil(total / LIMIT))
 
     /* Delete user */
@@ -151,7 +156,7 @@ export default function AdminUsersPage() {
 
                     {!loading && (
                         <span className="ml-auto font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#3B342B]/40">
-                            {total} user{total !== 1 ? 's' : ''}
+                            {visibleTotal} user{visibleTotal !== 1 ? 's' : ''}
                         </span>
                     )}
                 </div>
@@ -180,7 +185,7 @@ export default function AdminUsersPage() {
                 )}
 
                 {/* Empty */}
-                {!loading && !error && users.length === 0 && (
+                {!loading && !error && visibleUsers.length === 0 && (
                     <div className="text-center py-20 max-w-sm mx-auto">
                         <p className="font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#3B342B]/40 mb-3">
               // no users
@@ -200,10 +205,10 @@ export default function AdminUsersPage() {
                 )}
 
                 {/* User list */}
-                {!loading && !error && users.length > 0 && (
+                {!loading && !error && visibleUsers.length > 0 && (
                     <>
                         <div className="flex flex-col gap-3">
-                            {users.map(u => (
+                            {visibleUsers.map(u => (
                                 <article
                                     key={u._id}
                                     className="bg-white rounded-[24px] p-5 border border-[#16131010] flex items-center gap-4 flex-wrap"
@@ -228,12 +233,13 @@ export default function AdminUsersPage() {
                                             >
                                                 {u.role === 'jobSeeker' ? 'student' : u.role}
                                             </span>
-                                            <span
-                                                className={`font-['JetBrains_Mono'] text-[11px] px-2.5 py-0.5 rounded-full capitalize ${STATUS_BADGE[u.status] ?? 'bg-[#F3F4F6] text-[#6B7280]'
-                                                    }`}
-                                            >
+                                            {u.status && STATUS_BADGE[u.status] && (
+                                              <span
+                                                className={`font-['JetBrains_Mono'] text-[11px] px-2.5 py-0.5 rounded-full capitalize ${STATUS_BADGE[u.status]}`}
+                                              >
                                                 {u.status}
-                                            </span>
+                                              </span>
+                                            )}
                                         </div>
                                         <p className="text-[#3B342B] text-sm mt-0.5">{u.email}</p>
                                         <p className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-wider text-[#3B342B]/40 mt-1">

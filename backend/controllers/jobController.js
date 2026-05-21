@@ -380,8 +380,23 @@ exports.applyToJob = async (req, res, next) => {
 // GET /api/v1/jobs/my-jobs — Recruiter only
 exports.getMyJobs = async (req, res, next) => {
   try {
-    const jobs = await JobPost.find({ createdBy: req.user._id });
-    res.status(200).json({ success: true, jobs });
+    const jobs = await JobPost.find({ createdBy: req.user._id }).lean();
+    const jobIds = jobs.map((j) => j._id);
+
+    // Compute applicant count live from the Applications collection so the
+    // dashboard never depends on the cached `applicantCount` being in sync.
+    const counts = await Application.aggregate([
+      { $match: { job: { $in: jobIds } } },
+      { $group: { _id: "$job", count: { $sum: 1 } } },
+    ]);
+    const countMap = new Map(counts.map((c) => [String(c._id), c.count]));
+
+    const jobsWithCounts = jobs.map((j) => ({
+      ...j,
+      applicantCount: countMap.get(String(j._id)) || 0,
+    }));
+
+    res.status(200).json({ success: true, jobs: jobsWithCounts });
   } catch (err) {
     next(err);
   }
