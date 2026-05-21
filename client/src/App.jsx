@@ -19,6 +19,7 @@ import RecruiterDashboard from './pages/RecruiterDashboard'
 import CreateJobPage from './pages/CreateJobPage'
 import EditJobPage from './pages/EditJobPage'
 import AdminDashboard from './pages/AdminDashboard'
+import ApplicantsPage from './pages/ApplicantsPage'
 
 function App() {
   return (
@@ -85,7 +86,7 @@ function App() {
           } />
           <Route path="/recruiter/applicants/:jobId" element={
             <RoleRoute roles={['recruiter']}>
-              <div>ApplicantsPage</div>
+              <ApplicantsPage />
             </RoleRoute>
           } />
 
