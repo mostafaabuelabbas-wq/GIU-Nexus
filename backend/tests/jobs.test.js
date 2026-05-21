@@ -2,6 +2,7 @@ jest.mock("../services/hfService", () => ({
     zeroShotClassification: jest.fn().mockResolvedValue([
         { labels: ["Backend", "Frontend", "Other"], scores: [0.9, 0.05, 0.05] },
     ]),
+    classifyJobZeroShot: jest.fn().mockResolvedValue("Backend"),
     featureExtraction: jest.fn().mockResolvedValue([[0.1, 0.2, 0.3]]),
     tokenClassification: jest.fn().mockResolvedValue([]),
 }));
@@ -9,7 +10,16 @@ jest.mock("../services/hfService", () => ({
 const request = require("supertest");
 const app = require("../app");
 const User = require("../models/User");
+const JobPost = require("../models/JobPost");
 const db = require("./helpers/db");
+
+// Awaits any in-flight background classification/embedding promises that
+// createJob fires after sending its response. Keeps the test deterministic.
+async function flushBackgroundJobs() {
+    const pending = app.locals.pendingJobs || [];
+    app.locals.pendingJobs = [];
+    await Promise.allSettled(pending);
+}
 
 beforeAll(() => db.connect());
 afterAll(() => db.disconnect());
@@ -50,10 +60,17 @@ describe("POST /api/v1/jobs", () => {
             .set("Authorization", `Bearer ${token}`)
             .send(jobPayload);
 
+        // Job is created immediately with a placeholder category, then
+        // the background classifier patches it with the real label.
         expect(res.statusCode).toBe(201);
         expect(res.body.success).toBe(true);
-        expect(res.body.job.category).toBe("Backend");
+        expect(res.body.job.category).toBe("Classifying...");
         expect(res.body.job.title).toBe("Backend Intern");
+
+        // Wait for the background classification to complete, then re-fetch.
+        await flushBackgroundJobs();
+        const updated = await JobPost.findById(res.body.job._id);
+        expect(updated.category).toBe("Backend");
     });
 
     it("returns 403 for a pending recruiter", async () => {
@@ -111,6 +128,7 @@ describe("POST /api/v1/jobs/:jobId/apply", () => {
             .set("Authorization", `Bearer ${recruiterToken}`)
             .send(jobPayload);
         jobId = jobRes.body.job._id;
+        await flushBackgroundJobs();
 
         // Create job seeker and get their token
         await registerUser({

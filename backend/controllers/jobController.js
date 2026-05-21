@@ -2,7 +2,6 @@ const JobPost = require("../models/JobPost");
 const Application = require("../models/Application");
 const User = require("../models/User");
 const hf = require("../services/hfService");
-const https = require("https");
 
 function cosineSimilarity(vecA, vecB) {
   const dot = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
@@ -10,59 +9,15 @@ function cosineSimilarity(vecA, vecB) {
   const magB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
   return dot / (magA * magB);
 }
-const CANDIDATE_LABELS = ["Frontend", "Backend", "AI/ML", "DevOps", "Data Engineering", "Other"];
-
-// The HF SDK v4 zeroShotClassification throws ProviderOutputError on model-loading responses,
-// so we bypass it and call router.huggingface.co directly via https.
-function hfZeroShotRaw(text, timeoutMs) {
-  return new Promise((resolve, reject) => {
-    const payload = JSON.stringify({
-      inputs: text,
-      parameters: { candidate_labels: CANDIDATE_LABELS },
-    });
-    const req = https.request({
-      hostname: "router.huggingface.co",
-      path: "/hf-inference/models/facebook/bart-large-mnli",
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.HF_TOKEN}`,
-        "Content-Type": "application/json",
-        "Content-Length": Buffer.byteLength(payload),
-        "X-Wait-For-Model": "true",
-      },
-      timeout: timeoutMs,
-    }, (res) => {
-      let data = "";
-      res.on("data", (c) => { data += c; });
-      res.on("end", () => {
-        try {
-          const parsed = JSON.parse(data);
-          // Response: Array<{label, score}> — take top label
-          if (Array.isArray(parsed) && parsed[0]?.label) {
-            resolve(parsed[0].label);
-          } else {
-            reject(new Error(parsed?.error || "Unexpected HF response shape"));
-          }
-        } catch {
-          reject(new Error("Failed to parse HF response"));
-        }
-      });
-    });
-    req.on("timeout", () => { req.destroy(); reject(new Error(`HF request timed out after ${timeoutMs}ms`)); });
-    req.on("error", reject);
-    req.write(payload);
-    req.end();
-  });
-}
 
 async function classifyJobCategory(description) {
   try {
-    return await hfZeroShotRaw(description, 90000);
+    return await hf.classifyJobZeroShot(description, 90000);
   } catch (firstErr) {
     console.error("HF classification attempt 1 failed:", firstErr.message, "— retrying in 2s");
-    await new Promise((r) => setTimeout(r, 2000));
+    await new Promise((r) => { const t = setTimeout(r, 2000); if (t.unref) t.unref(); });
     try {
-      return await hfZeroShotRaw(description, 90000);
+      return await hf.classifyJobZeroShot(description, 90000);
     } catch (secondErr) {
       console.error("HF classification attempt 2 failed:", secondErr.message, "— defaulting to Other");
       return "Other";
@@ -113,10 +68,12 @@ exports.createJob = async (req, res, next) => {
 
     res.status(201).json({ success: true, job });
 
-    // Background: classify then update category
-    classifyJobCategory(description)
+    // Background: classify then update category. Exposed via app.locals so tests
+    // can await it deterministically without flaky setTimeouts.
+    const classifyPromise = classifyJobCategory(description)
       .then((category) => JobPost.findByIdAndUpdate(job._id, { category }))
       .catch((err) => console.error("Background classification failed:", err.message));
+    req.app.locals.pendingJobs = (req.app.locals.pendingJobs || []).concat(classifyPromise);
 
     // Background: cache embedding
     hf.featureExtraction({

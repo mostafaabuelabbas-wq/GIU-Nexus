@@ -1,35 +1,26 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-function BrandMark() {
-  return (
-    <div className="w-[30px] h-[30px] rounded-[9px] bg-[#161310] relative flex-shrink-0">
-      <div className="absolute left-[7px] top-[7px] w-[6px] h-[16px] bg-[#F1EAD9] rounded-sm -rotate-[12deg]" />
-      <div className="absolute right-[7px] top-[7px] w-[6px] h-[16px] bg-[#EE5688] rounded-sm rotate-[12deg]" />
-    </div>
-  )
-}
-
+// ── Reusable column ───────────────────────────────────────────────
 function FooterCol({ title, links }) {
   return (
     <div>
-      <h4 className="font-['JetBrains_Mono'] text-xs uppercase tracking-[0.14em] text-[#3B342B] mb-[18px] font-medium m-0">
-        {title}
+      <h4 className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#E5A93A] mb-5 font-semibold m-0">
+        // {title}
       </h4>
-      <ul className="list-none p-0 m-0 flex flex-col gap-2.5">
-        {links.map(([label, href]) => (
-          <li key={label}>
-            {href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('#') ? (
-              <a href={href} className="text-[#161310] text-[15px] hover:text-[#2F4A2E] transition-colors no-underline">
-                {label}
-              </a>
-            ) : (
-              <Link to={href} className="text-[#161310] text-[15px] hover:text-[#2F4A2E] transition-colors no-underline">
-                {label}
-              </Link>
-            )}
-          </li>
-        ))}
+      <ul className="list-none p-0 m-0 flex flex-col gap-3">
+        {links.map(({ label, href, external }) => {
+          const cls = "text-[15px] no-underline text-[#F1EAD9]/85 hover:text-[#EE5688] transition-colors"
+          const isExternal = external || href.startsWith('http') || href.startsWith('mailto:')
+          return (
+            <li key={label}>
+              {isExternal
+                ? <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className={cls}>{label}</a>
+                : <Link to={href} className={cls}>{label}</Link>
+              }
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
@@ -37,59 +28,76 @@ function FooterCol({ title, links }) {
 
 export default function Footer() {
   const { user } = useAuth()
-  const postRoleHref = user?.role === 'recruiter'
-    ? '/recruiter/jobs/create'
-    : '/register?role=recruiter'
+  const isRecruiter = user?.role === 'recruiter'
+  const isJobSeeker = user?.role === 'jobSeeker'
+
+  const studentLinks = [
+    { label: 'Browse jobs',         href: '/jobs' },
+    { label: 'Recommended for me',  href: isJobSeeker ? '/jobs/recommended' : '/login' },
+    { label: 'Saved roles',         href: isJobSeeker ? '/jobs/saved' : '/login' },
+    { label: 'My applications',     href: isJobSeeker ? '/applications/my' : '/login' },
+  ]
+
+  const employerLinks = [
+    { label: 'Post a role',     href: isRecruiter ? '/recruiter/jobs/create' : '/register?role=recruiter' },
+    { label: 'Recruiter login', href: '/login' },
+    { label: 'Book a demo',     href: 'mailto:hello@giu-nexus.eg' },
+  ]
+
+  const projectLinks = [
+    { label: 'How it works',  href: '/#how-it-works' },
+    { label: 'Manifesto',     href: '/#manifesto' },
+    { label: 'Open source',   href: 'https://github.com/mostafaabuelabbas-wq/GIU-Nexus' },
+    { label: 'hello@giu-nexus.eg', href: 'mailto:hello@giu-nexus.eg' },
+  ]
 
   return (
-    <footer className="bg-[#F1EAD9] text-[#161310] overflow-hidden">
-      <div className="max-w-[1360px] mx-auto px-10 pt-20 pb-14">
-        {/* Top grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr] gap-12 pb-12 mb-12 border-b border-[#16131015]">
-          <div>
-            <Link to="/" className="flex items-center gap-3 no-underline text-[#161310]">
-              <BrandMark />
-              <span className="font-['Space_Grotesk'] font-bold text-[22px] tracking-tight">GIU Nexus</span>
-              <span className="font-['Cairo'] font-bold text-[20px]">نِكسَس</span>
+    <footer className="bg-[#1B2F1A] text-[#F1EAD9] mt-24">
+      <div className="max-w-[1360px] mx-auto px-10 pt-20 pb-10">
+
+        {/* ── Top: brand block + 3 columns ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] gap-x-12 gap-y-14">
+
+          {/* Brand block — compact, professional */}
+          <div className="min-w-0 max-w-[360px]">
+            <Link to="/" className="inline-flex items-center no-underline">
+              <span className="font-['Space_Grotesk'] font-bold text-[32px] tracking-tight leading-none">
+                <span className="text-[#F1EAD9]">giu</span>
+                <span className="text-[#F1EAD9]/40 mx-0.5">/</span>
+                <span className="text-[#E5A93A]">nexus</span>
+                <span className="text-[#EE5688]">.</span>
+              </span>
             </Link>
-            <p className="mt-6 text-[15px] text-[#3B342B] leading-[1.5] max-w-[36ch]">
+
+            <p className="mt-6 text-[15px] text-[#F1EAD9]/80 leading-[1.6]">
+              Built by GIU students, for GIU students.{' '}
+              <span className="font-serif italic text-[#E5A93A]">Made by us. Made for us.</span>
+            </p>
+
+            <p className="mt-4 text-[14px] text-[#F1EAD9]/60 leading-relaxed">
               A career platform{' '}
-              <span className="font-['Cairo'] font-bold text-[#161310]">من الطلبة، للطلبة</span>
+              <span className="font-['Cairo'] font-bold text-[#F1EAD9]/85" lang="ar">من الطلبة، للطلبة</span>
               {' '}— built in New Cairo at GIU, Spring 2026.
             </p>
           </div>
-          <FooterCol title="For students" links={[
-            ['Find jobs', '/jobs'],
-            ['Internships', '/jobs?type=internship'],
-            ['Recommended for me', '/jobs/recommended'],
-            ['AI skill scan', '/profile'],
-          ]} />
-          <FooterCol title="For employers" links={[
-            ['Post a role', postRoleHref],
-            ['Recruiter login', '/login'],
-            ['Book a demo', 'mailto:hello@giu-nexus.eg'],
-          ]} />
-          <FooterCol title="The project" links={[
-            ['Our manifesto', '#manifesto'],
-            ['How it works', '#how'],
-            ['Open source', 'https://github.com/mostafaabuelabbas-wq/GIU-Nexus'],
-            ['hello@giu-nexus.eg', 'mailto:hello@giu-nexus.eg'],
-          ]} />
+
+          <FooterCol title="For students"  links={studentLinks} />
+          <FooterCol title="For employers" links={employerLinks} />
+          <FooterCol title="The project"   links={projectLinks} />
         </div>
 
-        {/* Mega wordmark */}
-        <h1 className="font-['Space_Grotesk'] font-bold leading-[0.85] tracking-[-0.06em] m-0 -mx-1 text-[clamp(100px,14vw,220px)]">
-          <span className="font-['Cairo'] font-black text-[#2F4A2E] tracking-[-0.02em]">نِكسَس</span>
-          ·NEXUS
-          <span className="italic font-medium text-[#EE5688]">.</span>
-        </h1>
-
-        {/* Legal */}
-        <div className="flex flex-wrap gap-4 items-center font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.08em] text-[#3B342B] mt-8">
-          <span>© 2026 GIU Nexus · German International University, New Cairo</span>
-          <span>Privacy</span>
-          <span>Terms</span>
-          <span className="ml-auto font-['Cairo'] normal-case tracking-normal text-sm">صُنع في القاهرة 🇪🇬</span>
+        {/* ── Bottom row ── */}
+        <div className="flex flex-wrap items-center gap-4 mt-16 pt-6 border-t border-[#F1EAD9]/15">
+          <p className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#F1EAD9]/55 m-0">
+            © 2026 GIU Nexus · A Software Engineering capstone
+          </p>
+          <a href="#privacy" className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#F1EAD9]/55 hover:text-[#E5A93A] transition-colors no-underline">Privacy</a>
+          <a href="#terms" className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#F1EAD9]/55 hover:text-[#E5A93A] transition-colors no-underline">Terms</a>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="font-['Cairo'] text-[15px] text-[#E5A93A]" lang="ar">صنع في القاهرة</span>
+            <span className="text-[#F1EAD9]/35">·</span>
+            <span className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.1em] text-[#EE5688]">Made in Cairo</span>
+          </div>
         </div>
       </div>
     </footer>

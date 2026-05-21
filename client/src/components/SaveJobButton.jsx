@@ -5,7 +5,7 @@ import api from '../services/api'
  * Bookmark toggle. Optimistically updates; reverts on error.
  * Disabled when jobStatus !== 'open' (backend returns 400 otherwise).
  */
-export default function SaveJobButton({ jobId, initialSaved = false, jobStatus = 'open' }) {
+export default function SaveJobButton({ jobId, initialSaved = false, jobStatus = 'open', render }) {
   const [saved, setSaved] = useState(initialSaved)
   const [loading, setLoading] = useState(false)
 
@@ -22,6 +22,10 @@ export default function SaveJobButton({ jobId, initialSaved = false, jobStatus =
     } finally {
       setLoading(false)
     }
+  }
+
+  if (typeof render === 'function') {
+    return render({ saved, toggle: handleToggle, loading, disabled: loading || jobStatus !== 'open' })
   }
 
   return (
