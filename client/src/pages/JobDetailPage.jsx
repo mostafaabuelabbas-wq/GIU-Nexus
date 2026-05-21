@@ -11,8 +11,11 @@ import Modal from '../components/Modal'
 import Spinner from '../components/Spinner'
 
 const TYPE_LABEL = { 'full-time':'Full-time','part-time':'Part-time','internship':'Internship' }
+const EXP_LABEL  = { entry:'Entry-level', mid:'Mid-level', senior:'Senior' }
+const MODE_LABEL = { remote:'Remote', hybrid:'Hybrid', onsite:'On-site' }
 const PALETTE = ['#2F4A2E','#EE5688','#E96A3A','#E5A93A','#5A3A6B','#2A6FDB']
 const colorFor = (s = '') => { let h = 0; for (let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return PALETTE[h%PALETTE.length] }
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : null
 
 export default function JobDetailPage() {
   const { id } = useParams()
@@ -173,11 +176,15 @@ export default function JobDetailPage() {
               <h3 className="font-['Space_Grotesk'] font-bold text-base text-[#161310] mb-4">Job details</h3>
               <dl className="flex flex-col gap-3 m-0">
                 {[
-                  { label:'Company',  value: job.company },
-                  { label:'Location', value: job.location },
-                  { label:'Type',     value: TYPE_LABEL[job.type] ?? job.type },
-                  { label:'Status',   value: job.status },
-                  job.totalSlots ? { label:'Slots', value: `${job.totalSlots} position${job.totalSlots>1?'s':''}` } : null,
+                  { label:'Company',    value: job.company },
+                  { label:'Location',   value: job.location },
+                  { label:'Type',       value: TYPE_LABEL[job.type] ?? job.type },
+                  job.workMode        ? { label:'Work mode',   value: MODE_LABEL[job.workMode] ?? job.workMode } : null,
+                  job.experienceLevel ? { label:'Experience',  value: EXP_LABEL[job.experienceLevel] ?? job.experienceLevel } : null,
+                  { label:'Status',     value: job.status },
+                  job.totalSlots      ? { label:'Slots',       value: `${job.filledSlots ?? 0} / ${job.totalSlots} filled` } : null,
+                  job.applicantCount != null ? { label:'Applicants', value: `${job.applicantCount}` } : null,
+                  job.deadline        ? { label:'Deadline',    value: fmtDate(job.deadline) } : null,
                 ].filter(Boolean).map(({ label, value }) => (
                   <div key={label} className="flex justify-between items-start gap-2">
                     <dt className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-wider text-[#3B342B]/50">{label}</dt>

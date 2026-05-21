@@ -4,7 +4,8 @@ const JobPost = require('../models/JobPost');
 exports.getMyApplications = async (req, res, next) => {
     try {
         const applications = await Application.find({ user: req.user._id })
-            .populate('job', 'title company type status');
+            .populate('job', 'title company type status location')
+            .sort({ appliedAt: -1 });
 
         res.status(200).json({ success: true, applications });
     } catch (err) {
@@ -155,7 +156,8 @@ exports.getJobApplicants = async (req, res, next) => {
         }
 
         const applications = await Application.find({ job: jobId })
-            .populate('user', 'name email skills');
+            .populate('user', 'name email skills')
+            .sort({ matchScore: -1 });
 
         res.status(200).json({ success: true, applications });
     } catch (err) {

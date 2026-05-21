@@ -111,7 +111,7 @@ exports.getAllJobs = async (req, res, next) => {
       limit = 10,
     } = req.query;
 
-    const filter = {};
+    const filter = { isActive: { $ne: false } };
 
     if (keyword) {
       const regex = new RegExp(keyword, "i");
@@ -137,7 +137,7 @@ exports.getAllJobs = async (req, res, next) => {
 // GET /api/v1/jobs/:id — Public
 exports.getJobById = async (req, res, next) => {
   try {
-    const job = await JobPost.findById(req.params.id).populate(
+    const job = await JobPost.findOne({ _id: req.params.id, isActive: { $ne: false } }).populate(
       "createdBy",
       "name email",
     );
@@ -201,7 +201,7 @@ exports.updateJob = async (req, res, next) => {
       try {
         const result = await hf.zeroShotClassification({
           model: "facebook/bart-large-mnli",
-          inputs: job.description,
+          inputs: [job.description],
           parameters: {
             candidate_labels: [
               "Frontend",
@@ -213,7 +213,7 @@ exports.updateJob = async (req, res, next) => {
             ],
           },
         });
-        job.category = result[0].label;
+        job.category = result[0].labels[0];
       } catch (err) {
         console.error(
           "HF re-classification failed, keeping existing category:",
@@ -270,7 +270,7 @@ exports.deleteJob = async (req, res, next) => {
         .json({ success: false, message: "Not authorised to delete this job" });
     }
 
-    await JobPost.findByIdAndDelete(req.params.id);
+    await JobPost.findByIdAndUpdate(req.params.id, { isActive: false });
 
     res.status(200).json({ success: true, message: "Job deleted" });
   } catch (err) {
@@ -380,7 +380,7 @@ exports.applyToJob = async (req, res, next) => {
 // GET /api/v1/jobs/my-jobs — Recruiter only
 exports.getMyJobs = async (req, res, next) => {
   try {
-    const jobs = await JobPost.find({ createdBy: req.user._id });
+    const jobs = await JobPost.find({ createdBy: req.user._id, isActive: { $ne: false } });
     res.status(200).json({ success: true, jobs });
   } catch (err) {
     next(err);
@@ -394,7 +394,7 @@ exports.getSavedJobs = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      jobs: user.savedJobs.filter((job) => job.status === "open"),
+      jobs: user.savedJobs.filter((job) => job.status === "open" && job.isActive !== false),
     });
   } catch (err) {
     next(err);
@@ -408,7 +408,7 @@ exports.getRecommendedJobs = async (req, res, next) => {
 
     const [userFull, jobs] = await Promise.all([
       User.findById(req.user._id).select("+embedding"),
-      JobPost.find({ status: "open" }).select("+embedding"),
+      JobPost.find({ status: "open", isActive: { $ne: false } }).select("+embedding"),
     ]);
 
     if (jobs.length === 0) {
