@@ -57,11 +57,15 @@ export default function JobDetailPage() {
   const [job,         setJob]         = useState(null)
   const [loading,     setLoading]     = useState(true)
   const [error,       setError]       = useState('')
-  const [applyModal,  setApplyModal]  = useState(false)
-  const [coverLetter, setCoverLetter] = useState('')
-  const [applying,    setApplying]    = useState(false)
-  const [applyError,  setApplyError]  = useState('')
-  const [application, setApplication] = useState(null)
+  const [applyModal,    setApplyModal]    = useState(false)
+  const [coverLetter,   setCoverLetter]   = useState('')
+  const [applying,      setApplying]      = useState(false)
+  const [applyError,    setApplyError]    = useState('')
+  const [application,   setApplication]   = useState(null)
+  const [aiDraft,       setAiDraft]       = useState('')
+  const [generatingCL,  setGeneratingCL]  = useState(false)
+  const [clError,       setClError]       = useState('')
+  const [copied,        setCopied]        = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -86,6 +90,23 @@ export default function JobDetailPage() {
       })
     return () => { cancelled = true }
   }, [id, isJobSeeker])
+
+  const handleGenerateCoverLetter = async () => {
+    setGeneratingCL(true); setClError(''); setAiDraft('')
+    try {
+      const { data } = await api.post(`/jobs/${id}/cover-letter`)
+      setAiDraft(data.coverLetter)
+    } catch (err) {
+      setClError(err.response?.data?.message || 'Generation failed. Please try again.')
+    } finally {
+      setGeneratingCL(false) }
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(aiDraft)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleApply = async () => {
     setApplying(true); setApplyError('')
@@ -291,6 +312,70 @@ export default function JobDetailPage() {
                     </li>
                   ))}
                 </ul>
+              </SectionCard>
+            )}
+
+            {/* ── AI Cover Letter ── */}
+            {isJobSeeker && (
+              <SectionCard eyebrow="// ai feature" title="Cover letter suggestion">
+                <p className="text-[#3B342B] text-[13.5px] mb-5 leading-relaxed">
+                  Let AI draft a personalised cover letter from your bio and this job's description. Edit it before applying.
+                </p>
+
+                {clError && (
+                  <div className="mb-4 p-3.5 bg-[#FEE2E2] border border-red-200 rounded-xl text-red-700 text-sm">
+                    {clError}
+                  </div>
+                )}
+
+                {!aiDraft && (
+                  <button
+                    onClick={handleGenerateCoverLetter}
+                    disabled={generatingCL}
+                    className="inline-flex items-center gap-2 bg-[#2F4A2E] text-[#F1EAD9] font-['Space_Grotesk'] font-bold text-[14px] px-6 py-3 rounded-full hover:bg-[#243b23] transition-colors disabled:opacity-60"
+                  >
+                    {generatingCL ? (
+                      <><Spinner white size="sm" /> Generating…</>
+                    ) : (
+                      <>
+                        <span className="font-['JetBrains_Mono'] text-[9px] uppercase tracking-[.1em] px-1.5 py-0.5 rounded bg-[#F1EAD9]/20">AI</span>
+                        Generate Cover Letter
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {aiDraft && (
+                  <div className="flex flex-col gap-3">
+                    <textarea
+                      value={aiDraft}
+                      onChange={e => setAiDraft(e.target.value)}
+                      rows={10}
+                      className="w-full bg-[#F1EAD9] border border-[#16131015] rounded-2xl px-5 py-4 text-[#161310] text-[14px] leading-[1.8] focus:outline-none focus:border-[#2F4A2E] focus:ring-2 focus:ring-[#2F4A2E]/15 transition-all resize-y"
+                    />
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={handleCopy}
+                        className="inline-flex items-center gap-1.5 bg-[#E9E0CB] text-[#161310] font-semibold text-[13px] px-4 py-2 rounded-full hover:bg-[#D8CEBA] transition-colors border border-[#16131012]"
+                      >
+                        {copied ? '✓ Copied!' : 'Copy text'}
+                      </button>
+                      <button
+                        onClick={() => { setCoverLetter(aiDraft); setApplyModal(true) }}
+                        className="inline-flex items-center gap-1.5 bg-[#EE5688] text-white font-semibold text-[13px] px-4 py-2 rounded-full hover:bg-[#e9437a] transition-colors"
+                      >
+                        Use in application →
+                      </button>
+                      <button
+                        onClick={() => { setAiDraft(''); setClError(''); handleGenerateCoverLetter() }}
+                        disabled={generatingCL}
+                        className="text-[13px] text-[#3B342B]/45 hover:text-[#161310] transition-colors px-2 disabled:opacity-40"
+                      >
+                        Regenerate
+                      </button>
+                    </div>
+                  </div>
+                )}
               </SectionCard>
             )}
 

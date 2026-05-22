@@ -15,7 +15,8 @@ const {
   getMyJobs,
   getSavedJobs,
   getRecommendedJobs,
-  createJob
+  createJob,
+  generateCoverLetter,
 } = require('../controllers/jobController');
 
 /**
@@ -280,6 +281,13 @@ router.post(
   protect,
   authorize('jobSeeker'),
   applyToJob
+);
+
+router.post(
+  '/:id/cover-letter',
+  protect,
+  authorize('jobSeeker'),
+  generateCoverLetter
 );
 
 /**

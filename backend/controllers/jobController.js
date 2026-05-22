@@ -497,3 +497,44 @@ exports.getRecommendedJobs = async (req, res, next) => {
     res.status(200).json({ success: true, jobs });
   }
 };
+
+// POST /api/v1/jobs/:id/cover-letter — jobSeeker only
+exports.generateCoverLetter = async (req, res, next) => {
+  try {
+    const job = await JobPost.findById(req.params.id);
+    if (!job) return res.status(404).json({ success: false, message: "Job not found." });
+
+    const user = await require('../models/User').findById(req.user._id);
+    const bio = user?.bio?.trim();
+
+    if (!bio) {
+      return res.status(400).json({
+        success: false,
+        message: "Add a bio to your profile first — the AI uses it to personalise your cover letter.",
+      });
+    }
+
+    const prompt =
+      `Write a professional cover letter for the following job application.\n\n` +
+      `Job Title: ${job.title}\n` +
+      `Company: ${job.company}\n` +
+      `Job Description: ${job.description || "Not provided."}\n` +
+      `Required Skills: ${(job.requirements || []).join(", ") || "Not specified."}\n\n` +
+      `Applicant Bio: ${bio}\n\n` +
+      `Write a concise 3-paragraph cover letter. ` +
+      `Open with genuine enthusiasm for the specific role, ` +
+      `highlight the most relevant skills and experience from the bio, ` +
+      `and close with a professional call to action. ` +
+      `Write only the cover letter text, no subject line, no placeholders.`;
+
+    const coverLetter = await hf.generateText(prompt, 60000);
+
+    res.status(200).json({ success: true, coverLetter });
+  } catch (error) {
+    console.error("Cover letter generation failed:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "AI generation failed. Please try again in a moment.",
+    });
+  }
+};

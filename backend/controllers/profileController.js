@@ -139,7 +139,7 @@ const [nerResult, zeroShotSkills] = await Promise.all([
 const nerSkills = [
   ...new Set(
     nerResult
-      .filter((e) => ["MISC", "B-MISC", "I-MISC"].includes(e.entity_group))
+      .filter((e) => ["MISC", "B-MISC", "I-MISC", "ORG", "B-ORG", "I-ORG"].includes(e.entity_group))
       .map((e) => e.word.replace(/^##/, ""))
       .filter((word) =>
         !ARTIFACTS.has(word) &&
