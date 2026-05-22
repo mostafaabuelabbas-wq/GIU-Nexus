@@ -20,8 +20,8 @@ const fmtDate = (d) =>
     d ? new Date(d).toLocaleDateString('en-EG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
 const ROLE_OPTS = [{ v: '', l: 'All roles' }, { v: 'jobSeeker', l: 'Students' }, { v: 'recruiter', l: 'Recruiters' }, { v: 'admin', l: 'Admins' }]
-const STATUS_OPTS = [{ v: '', l: 'All statuses' }, { v: 'active', l: 'Active' }, { v: 'pending', l: 'Pending' }, { v: 'rejected', l: 'Rejected' }, { v: 'banned', l: 'Banned' }]
-const STATUS_NEW = [{ v: 'active', l: 'Set active' }, { v: 'banned', l: 'Ban' }, { v: 'rejected', l: 'Reject' }]
+const STATUS_OPTS = [{ v: '', l: 'All statuses' }, { v: 'approved', l: 'Approved' }, { v: 'pending', l: 'Pending' }, { v: 'rejected', l: 'Rejected' }]
+const STATUS_NEW = [{ v: 'approved', l: 'Approve' }, { v: 'pending', l: 'Set pending' }, { v: 'rejected', l: 'Reject' }]
 
 const ROLE_BADGE = {
     jobSeeker: 'bg-[#EDE9FE] text-[#6D28D9]',
@@ -29,10 +29,9 @@ const ROLE_BADGE = {
     admin: 'bg-[#161310] text-[#F1EAD9]',
 }
 const STATUS_BADGE = {
-    active: 'bg-[#DCFCE7] text-[#15803D]',
+    approved: 'bg-[#DCFCE7] text-[#15803D]',
     pending: 'bg-[#FEF3C7] text-[#B45309]',
     rejected: 'bg-[#FEE2E2] text-[#B91C1C]',
-    banned: 'bg-[#161310] text-[#F1EAD9]',
 }
 
 const selectCls =
@@ -252,21 +251,22 @@ export default function AdminUsersPage() {
 
                                     {/* Actions */}
                                     <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                                        {/* Status dropdown — excludes current status */}
-                                        <select
-                                            value=""
-                                            onChange={e => e.target.value && handleStatusChange(u._id, e.target.value)}
-                                            disabled={!!updating[u._id]}
-                                            className="bg-[#F1EAD9] border border-[#16131010] rounded-full px-3 py-2 text-sm font-semibold text-[#161310] focus:outline-none focus:ring-2 focus:ring-[#EE5688]/15 disabled:opacity-50 cursor-pointer"
-                                        >
-                                            <option value="">Change status…</option>
-                                            {STATUS_NEW.filter(s => s.v !== u.status).map(s => (
-                                                <option key={s.v} value={s.v}>{s.l}</option>
-                                            ))}
-                                        </select>
-
-                                        {updating[u._id] && (
-                                            <Spinner size="sm" />
+                                        {/* Status dropdown — only for recruiters */}
+                                        {u.role === 'recruiter' && (
+                                            <>
+                                                <select
+                                                    value=""
+                                                    onChange={e => e.target.value && handleStatusChange(u._id, e.target.value)}
+                                                    disabled={!!updating[u._id]}
+                                                    className="bg-[#F1EAD9] border border-[#16131010] rounded-full px-3 py-2 text-sm font-semibold text-[#161310] focus:outline-none focus:ring-2 focus:ring-[#EE5688]/15 disabled:opacity-50 cursor-pointer"
+                                                >
+                                                    <option value="">Change status…</option>
+                                                    {STATUS_NEW.filter(s => s.v !== u.status).map(s => (
+                                                        <option key={s.v} value={s.v}>{s.l}</option>
+                                                    ))}
+                                                </select>
+                                                {updating[u._id] && <Spinner size="sm" />}
+                                            </>
                                         )}
 
                                         <button
