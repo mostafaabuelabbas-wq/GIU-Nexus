@@ -1,312 +1,312 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import api from '../services/api'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import Spinner from '../components/Spinner'
-import SkillChip from '../components/SkillChip'
 
-const PALETTE = ['#2F4A2E', '#EE5688', '#E96A3A', '#E5A93A', '#5A3A6B', '#2A6FDB']
-const colorFor = (s = '') => {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
-  return PALETTE[h % PALETTE.length]
+const STATUS_CONFIG = {
+  pending:     { bg:'#FEF3C7', border:'rgba(180,83,9,0.2)',  text:'#B45309', dot:'#D97706', label:'Pending'     },
+  shortlisted: { bg:'#DCE8F5', border:'rgba(42,111,219,0.2)', text:'#1D4ED8', dot:'#2A6FDB', label:'Shortlisted' },
+  rejected:    { bg:'#FEE2E2', border:'rgba(185,28,28,0.2)',  text:'#B91C1C', dot:'#DC2626', label:'Rejected'    },
+}
+const STATUSES = ['pending','shortlisted','rejected']
+
+const SKILL_COLORS = ['#DCEDDA','#DCE8F5','#E8DAF5','#FDE9DC','#FEF3C7','#CCFBF1']
+const skillBg = (s='') => { let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return SKILL_COLORS[h%SKILL_COLORS.length] }
+
+const AVATAR_PALETTE = ['#E5A93A','#EE5688','#7C4DBE','#E96A3A','#2F4A2E','#2A6FDB']
+const avatarColor = (s='') => { let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return AVATAR_PALETTE[h%AVATAR_PALETTE.length] }
+
+function StatusBadge({ status }) {
+  const s = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full font-['JetBrains_Mono'] font-bold px-3 py-1 text-[11px] uppercase tracking-[0.1em] border flex-shrink-0"
+      style={{ background: s.bg, color: s.text, borderColor: s.border }}>
+      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: s.dot }} />
+      {s.label}
+    </span>
+  )
 }
 
-const STATUS_OPTIONS = [
-  { v: 'pending',     l: 'Pending'     },
-  { v: 'shortlisted', l: 'Shortlisted' },
-  { v: 'rejected',    l: 'Rejected'    },
-]
+function StatusDropdown({ appId, current, onChange }) {
+  const [open,    setOpen]    = useState(false)
+  const [loading, setLoading] = useState(false)
 
-const STATUS_STYLE = {
-  pending:     { bg: 'rgba(229,169,58,.18)',  color: '#7A6210'  },
-  shortlisted: { bg: 'rgba(47,74,46,.14)',    color: '#2F4A2E'  },
-  rejected:    { bg: 'rgba(233,106,58,.15)',  color: '#8A3A10'  },
-}
-const st = s => STATUS_STYLE[s] ?? STATUS_STYLE.pending
+  const handleSelect = async (status) => {
+    if (status === current) { setOpen(false); return }
+    setLoading(true); setOpen(false)
+    try {
+      await api.patch(`/applications/${appId}/status`, { status })
+      onChange(appId, status)
+    } catch { /* keep current */ }
+    finally { setLoading(false) }
+  }
 
-const unwrap = (data) =>
-  Array.isArray(data) ? data : data?.applications ?? data?.data ?? []
-
-function timeAgo(date) {
-  if (!date) return '—'
-  const d = Math.floor((Date.now() - new Date(date)) / 1000)
-  if (d < 3600)   return `${Math.floor(d / 60)}m ago`
-  if (d < 86400)  return `${Math.floor(d / 3600)}h ago`
-  if (d < 604800) return `${Math.floor(d / 86400)}d ago`
-  return `${Math.floor(d / 604800)}w ago`
-}
-
-function useCountUp(target, delay = 0) {
-  const [val, setVal] = useState(0)
-  const current = useRef(0)
-
-  useEffect(() => {
-    const from = current.current
-    const t = setTimeout(() => {
-      const start = performance.now()
-      const step = now => {
-        const p = Math.min((now - start) / 400, 1)
-        const next = Math.round(from + (target - from) * p)
-        current.current = next
-        setVal(next)
-        if (p < 1) requestAnimationFrame(step)
-      }
-      requestAnimationFrame(step)
-    }, delay)
-    return () => clearTimeout(t)
-  }, [target, delay])
-  return val
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        disabled={loading}
+        className="flex items-center gap-2 bg-[#E9E0CB] text-[#161310] font-['JetBrains_Mono'] font-bold text-[11px] uppercase tracking-[0.1em] px-3 py-2 rounded-full border border-[#16131012] hover:bg-[#D8CEBA] transition-colors disabled:opacity-50"
+      >
+        {loading ? <Spinner size="sm" /> : <StatusBadge status={current} />}
+        <span className="text-[#3B342B]/50 text-[10px]">▾</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-[calc(100%+8px)] bg-[#EDE4D0] rounded-2xl border border-[#16131012] p-1.5 z-20 min-w-[160px] shadow-[0_12px_32px_-12px_rgba(22,19,16,0.2)]">
+          {STATUSES.map(s => {
+            const cfg = STATUS_CONFIG[s]
+            return (
+              <button key={s} onClick={() => handleSelect(s)}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-[#D8CEBA] transition-colors text-left">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
+                <span className="font-['JetBrains_Mono'] font-bold text-[11px] uppercase tracking-[0.1em]" style={{ color: cfg.text }}>
+                  {cfg.label}
+                </span>
+                {s === current && <span className="ml-auto text-[#3B342B]/30 text-xs">✓</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function ApplicantsPage() {
   const { jobId } = useParams()
-  const [job, setJob]                   = useState(null)
-  const [applications, setApplications] = useState([])
-  const [loading, setLoading]           = useState(true)
-  const [error, setError]               = useState('')
-  const [updating, setUpdating]         = useState({})
-  const [actionErrors, setActionErrors] = useState({})
+  const [job,          setJob]          = useState(null)
+  const [applicants,   setApplicants]   = useState([])
+  const [loading,      setLoading]      = useState(true)
+  const [error,        setError]        = useState('')
+  const [filter,       setFilter]       = useState('all')
+  const [expandedId,   setExpandedId]   = useState(null)
 
   useEffect(() => {
-    let active = true
-    setLoading(true)
-    setError('')
+    let cancelled = false
     Promise.all([
-      api.get(`/jobs/${jobId}`).catch(() => null),
+      api.get(`/jobs/${jobId}`),
       api.get(`/jobs/${jobId}/applicants`),
     ])
-      .then(([jobRes, appsRes]) => {
-        if (!active) return
-        setJob(jobRes?.data?.job ?? null)
-        setApplications(unwrap(appsRes.data))
+      .then(([jobRes, appRes]) => {
+        if (cancelled) return
+        setJob(jobRes.data.job ?? jobRes.data)
+        const raw = appRes.data.applicants ?? appRes.data.applications ?? appRes.data ?? []
+        setApplicants(raw)
+        setLoading(false)
       })
       .catch(err => {
-        if (!active) return
-        setError(err.response?.data?.message || 'Failed to load applicants.')
+        if (!cancelled) { setError(err.response?.data?.message || 'Failed to load applicants.'); setLoading(false) }
       })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    return () => { cancelled = true }
   }, [jobId])
 
-  const handleStatusChange = async (appId, status) => {
-    setUpdating(p => ({ ...p, [appId]: true }))
-    setActionErrors(p => ({ ...p, [appId]: '' }))
-    try {
-      await api.patch(`/applications/${appId}/status`, { status })
-      setApplications(prev => prev.map(a => a._id === appId ? { ...a, status } : a))
-    } catch (err) {
-      setActionErrors(p => ({ ...p, [appId]: err.response?.data?.message || 'Update failed.' }))
-    } finally {
-      setUpdating(p => ({ ...p, [appId]: false }))
-    }
+  const handleStatusChange = (appId, newStatus) => {
+    setApplicants(prev => prev.map(a => a._id === appId ? { ...a, status: newStatus } : a))
   }
 
-  const total       = applications.length
-  const shortlisted = applications.filter(a => a.status === 'shortlisted').length
-  const pending     = applications.filter(a => a.status === 'pending').length
+  const counts = {
+    all:         applicants.length,
+    pending:     applicants.filter(a => a.status === 'pending').length,
+    shortlisted: applicants.filter(a => a.status === 'shortlisted').length,
+    rejected:    applicants.filter(a => a.status === 'rejected').length,
+  }
 
-  const animTotal       = useCountUp(total,       200)
-  const animShortlisted = useCountUp(shortlisted, 350)
-  const animPending     = useCountUp(pending,     450)
+  const visible = filter === 'all' ? applicants : applicants.filter(a => a.status === filter)
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F1EAD9' }}>
+    <div className="min-h-screen bg-[#F1EAD9] flex flex-col">
       <Navbar />
 
-      <main className="flex-1 max-w-[900px] w-full mx-auto px-6 py-8 flex flex-col gap-[18px]">
-
-        {/* ── HERO ── */}
-        <div className="rounded-[28px] overflow-hidden relative" style={{ background: '#2F4A2E' }}>
-          {/* noise */}
-          <div className="absolute inset-0 pointer-events-none" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E")`,
-          }} />
-          {/* deco */}
-          <span className="absolute right-8 top-4 font-['Cairo'] font-black leading-none select-none pointer-events-none"
-            style={{ fontSize: 160, color: 'rgba(241,234,217,.04)' }} aria-hidden="true">م</span>
-
-          <div className="relative z-10 px-9 pt-9 pb-0">
-            <div className="flex items-center gap-2 flex-wrap mb-4">
-              <Link
-                to="/recruiter/dashboard"
-                className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[.12em] px-3 py-[5px] rounded-full no-underline transition-colors"
-                style={{ border: '1.5px solid rgba(241,234,217,.25)', color: 'rgba(241,234,217,.65)' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#F1EAD9'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(241,234,217,.65)'}
-              >
-                ← Dashboard
-              </Link>
-            </div>
-            <h1 className="font-['Space_Grotesk'] font-bold text-[#F1EAD9] tracking-[-0.04em] leading-[.92]"
-              style={{ fontSize: 'clamp(40px, 7vw, 72px)' }}>
-              Applicants
-            </h1>
-            {job && (
-              <p className="mt-3 text-[13.5px] tracking-[-0.01em]"
-                style={{ color: 'rgba(241,234,217,.55)' }}>
-                {job.title}
-                {job.company && <span style={{ color: 'rgba(241,234,217,.35)' }}> · {job.company}</span>}
-              </p>
-            )}
-            <div className="mt-6 mb-0" />
-          </div>
-
-          {/* stats strip */}
-          <div className="relative z-10 grid grid-cols-3 mt-7"
-            style={{ borderTop: '1.5px solid rgba(241,234,217,.1)' }}>
-            {[
-              { val: animTotal,       label: 'Total applicants', color: '#F1EAD9' },
-              { val: animShortlisted, label: 'Shortlisted',      color: '#E5A93A' },
-              { val: animPending,     label: 'Awaiting review',  color: '#EE5688' },
-            ].map((s, i) => (
-              <div key={i} className="px-7 py-5"
-                style={{ borderRight: i < 2 ? '1.5px solid rgba(241,234,217,.1)' : 'none' }}>
-                <div className="font-['Space_Grotesk'] font-bold text-[32px] leading-none tracking-[-0.04em]"
-                  style={{ color: s.color }}>
-                  {s.val}
-                </div>
-                <div className="font-['JetBrains_Mono'] text-[9.5px] uppercase tracking-[.1em] mt-1"
-                  style={{ color: 'rgba(241,234,217,.35)' }}>
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* ── Paper header ── */}
+      <div className="bg-[#F7F1E3] border-b border-[#16131010] relative overflow-hidden">
+        <div className="absolute right-0 top-0 font-['Cairo'] font-black select-none pointer-events-none leading-none text-[#161310] opacity-[0.04]"
+          style={{ fontSize: 'clamp(120px,16vw,240px)' }} aria-hidden="true">
+          متقدمون
         </div>
-
-        {/* ── Loading ── */}
-        {loading && (
-          <div className="flex items-center justify-center py-24">
-            <Spinner size="lg" />
-          </div>
-        )}
-
-        {/* ── Error ── */}
-        {!loading && error && (
-          <div className="rounded-[24px] px-6 py-5 text-sm font-semibold"
-            style={{ background: 'rgba(233,106,58,.1)', color: '#8A3A10', border: '1.5px solid rgba(233,106,58,.2)' }}>
-            {error}
-          </div>
-        )}
-
-        {/* ── Empty ── */}
-        {!loading && !error && applications.length === 0 && (
-          <div className="rounded-[24px] py-20 flex flex-col items-center gap-4 text-center"
-            style={{ background: '#EDE4CE', border: '1.5px solid rgba(59,52,43,.08)' }}>
-            <div className="font-['Space_Grotesk'] font-bold text-[18px]" style={{ color: '#2F4A2E' }}>
-              No applicants yet
-            </div>
-            <p className="text-[14px] max-w-[32ch]" style={{ color: '#5C5247' }}>
-              They'll show up here the moment someone applies.
-            </p>
-          </div>
-        )}
-
-        {/* ── List ── */}
-        {!loading && !error && applications.length > 0 && (
-          <div className="rounded-[24px] p-7"
-            style={{ background: '#E5D9C0', border: '1.5px solid rgba(59,52,43,.07)' }}>
-
-            <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-              <div className="flex items-baseline gap-2">
-                <h2 className="font-['Space_Grotesk'] font-bold text-[18px] m-0" style={{ color: '#2F4A2E' }}>
-                  All applicants
-                </h2>
-                <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[.1em] px-2.5 py-1 rounded-full"
-                  style={{ background: '#2F4A2E', color: '#F1EAD9' }}>
-                  {total}
+        <div className="max-w-[1200px] mx-auto px-10 py-10 relative z-10">
+          <Link to="/recruiter/dashboard"
+            className="font-['JetBrains_Mono'] text-xs uppercase tracking-[0.14em] text-[#3B342B]/45 hover:text-[#161310] transition-colors inline-flex items-center gap-1.5 mb-6 no-underline">
+            ← Back to dashboard
+          </Link>
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <h1 className="font-['Space_Grotesk'] font-bold text-[#161310] leading-tight tracking-tight m-0"
+                  style={{ fontSize: 'clamp(26px,4vw,44px)' }}>
+                  {job ? `Applicants — ${job.title}` : 'Applicants'}
+                </h1>
+                <span className="font-['Cairo'] font-black text-[#3B342B]/20" style={{ fontSize: 'clamp(22px,3vw,36px)' }}>
+                  متقدمون
                 </span>
               </div>
-              <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[.1em]"
-                style={{ color: 'rgba(59,52,43,.4)' }}>
-                // sorted by recent
-              </span>
+              {job && <p className="text-[#3B342B] text-[15px] mt-2">{job.company} · {job.location}</p>}
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="font-['Space_Grotesk'] font-bold text-[36px] text-[#161310] leading-none">{applicants.length}</div>
+              <div>
+                <div className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-wider text-[#3B342B]/45">Total</div>
+                <div className="font-['Cairo'] font-bold text-sm text-[#3B342B]/40">متقدم</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 max-w-[1200px] w-full mx-auto px-10 py-8 pb-16">
+
+        {loading && <div className="flex items-center justify-center py-24"><Spinner size="lg" /></div>}
+
+        {!loading && error && (
+          <div className="text-center py-16">
+            <h3 className="font-['Space_Grotesk'] font-bold text-2xl text-[#161310] mb-2">Couldn't load applicants.</h3>
+            <p className="text-[#3B342B] mb-6">{error}</p>
+            <button onClick={() => window.location.reload()}
+              className="bg-[#2F4A2E] text-[#F1EAD9] font-bold px-6 py-3 rounded-full hover:bg-[#243b23] transition-colors">
+              Try again →
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            {/* ── Filter tabs + counts ── */}
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+              {[
+                { key:'all',         label:'All' },
+                { key:'pending',     label:'Pending' },
+                { key:'shortlisted', label:'Shortlisted' },
+                { key:'rejected',    label:'Rejected' },
+              ].map(tab => (
+                <button key={tab.key} onClick={() => setFilter(tab.key)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full font-['JetBrains_Mono'] font-bold text-[11px] uppercase tracking-[0.1em] border transition-all"
+                  style={{
+                    background: filter === tab.key ? '#2F4A2E' : '#EDE4D0',
+                    color:      filter === tab.key ? '#F1EAD9' : '#3B342B',
+                    borderColor: filter === tab.key ? '#2F4A2E' : 'rgba(22,19,16,0.1)',
+                  }}>
+                  {tab.label}
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px]"
+                    style={{
+                      background: filter === tab.key ? 'rgba(241,234,217,0.2)' : 'rgba(22,19,16,0.08)',
+                      color:      filter === tab.key ? '#F1EAD9' : '#3B342B',
+                    }}>
+                    {counts[tab.key]}
+                  </span>
+                </button>
+              ))}
             </div>
 
-            <div className="flex flex-col gap-2.5">
-              {applications.map((app, i) => {
-                const u      = app.user || {}
-                const status = st(app.status)
-                return (
-                  <div key={app._id || i}
-                    className="flex items-center gap-3.5 rounded-[14px] px-4 py-3.5 transition-all flex-wrap"
-                    style={{ background: '#F1EAD9', border: '1.5px solid rgba(59,52,43,.07)', cursor: 'default' }}
-                    onMouseEnter={e => e.currentTarget.style.boxShadow = '4px 0 0 0 #2F4A2E inset'}
-                    onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+            {/* ── Empty state ── */}
+            {visible.length === 0 && (
+              <div className="text-center py-20 max-w-sm mx-auto">
+                <div className="w-16 h-16 rounded-2xl bg-[#EDE4D0] border border-[#16131012] flex items-center justify-center text-3xl mx-auto mb-5">👥</div>
+                <span className="font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#3B342B]/40 block mb-3">// no applicants</span>
+                <h3 className="font-['Space_Grotesk'] font-bold text-2xl text-[#161310] mb-2">
+                  {filter === 'all' ? 'No applicants yet.' : `No ${filter} applicants.`}
+                </h3>
+                <p className="text-[#3B342B] leading-relaxed">
+                  {filter === 'all'
+                    ? 'Share the listing to start getting applications.'
+                    : 'Try a different filter.'}
+                </p>
+              </div>
+            )}
 
-                    {/* avatar */}
-                    <div className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center font-['Space_Grotesk'] font-bold text-[15px] flex-shrink-0"
-                      style={{ background: colorFor(u.name), color: '#F1EAD9' }}>
-                      {(u.name || '?').slice(0, 2).toUpperCase()}
-                    </div>
+            {/* ── Applicant rows ── */}
+            {visible.length > 0 && (
+              <div className="flex flex-col gap-3">
+                {visible.map(app => {
+                  const applicant  = app.applicant ?? app.user ?? {}
+                  const skills     = applicant.skills ?? []
+                  const initial    = (applicant.name || '?')[0].toUpperCase()
+                  const isExpanded = expandedId === app._id
 
-                    {/* info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-['Space_Grotesk'] font-semibold text-[15px] truncate"
-                        style={{ color: '#2F4A2E' }}>
-                        {u.name || 'Unknown applicant'}
-                      </div>
-                      <div className="text-[13px] mt-0.5 truncate" style={{ color: '#5C5247' }}>
-                        {u.email}
-                      </div>
-                      {u.skills?.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {u.skills.slice(0, 5).map((s, idx) => (
-                            <SkillChip key={idx} skill={s} />
-                          ))}
-                          {u.skills.length > 5 && (
-                            <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-wider self-center"
-                              style={{ color: 'rgba(59,52,43,.4)' }}>
-                              +{u.skills.length - 5}
+                  return (
+                    <article key={app._id}
+                      className="bg-[#EDE4D0] rounded-[20px] border border-[#2F4A2E]/15 overflow-hidden transition-all hover:border-[#2F4A2E]/30">
+
+                      {/* main row */}
+                      <div className="flex items-center gap-4 px-5 py-4">
+                        {/* avatar */}
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-['Space_Grotesk'] font-bold text-base flex-shrink-0"
+                          style={{ background: avatarColor(applicant.name || '') }}>
+                          {initial}
+                        </div>
+
+                        {/* name + email */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-['Space_Grotesk'] font-bold text-[15px] text-[#161310] truncate">{applicant.name || '—'}</div>
+                          <div className="text-[#3B342B]/55 text-[13px] truncate font-['JetBrains_Mono']">{applicant.email || '—'}</div>
+                        </div>
+
+                        {/* skills preview */}
+                        <div className="hidden md:flex items-center gap-1.5 flex-shrink-0 max-w-[280px]">
+                          {skills.slice(0, 4).map(sk => (
+                            <span key={sk}
+                              className="text-[11px] font-medium px-2.5 py-1 rounded-full border border-[#16131012] truncate max-w-[90px]"
+                              style={{ background: skillBg(sk), color: '#161310' }}>
+                              {sk}
                             </span>
+                          ))}
+                          {skills.length > 4 && (
+                            <span className="text-[11px] text-[#3B342B]/40 font-['JetBrains_Mono']">+{skills.length - 4}</span>
+                          )}
+                        </div>
+
+                        {/* status dropdown */}
+                        <StatusDropdown appId={app._id} current={app.status} onChange={handleStatusChange} />
+
+                        {/* expand toggle */}
+                        <button
+                          onClick={() => setExpandedId(id => id === app._id ? null : app._id)}
+                          className="text-[#3B342B]/35 hover:text-[#161310] transition-colors text-sm font-['JetBrains_Mono'] uppercase tracking-wider ml-1 bg-transparent border-0 cursor-pointer px-2"
+                        >
+                          {isExpanded ? '▴' : '▾'}
+                        </button>
+                      </div>
+
+                      {/* expanded: cover letter + all skills */}
+                      {isExpanded && (
+                        <div className="px-5 pb-5 border-t border-dashed border-[#2F4A2E]/15 pt-4 flex flex-col gap-4">
+                          {skills.length > 0 && (
+                            <div>
+                              <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.14em] text-[#3B342B]/40 block mb-2">Skills</span>
+                              <div className="flex flex-wrap gap-2">
+                                {skills.map(sk => (
+                                  <span key={sk} className="text-[12px] font-medium px-3 py-1 rounded-full border border-[#16131012]"
+                                    style={{ background: skillBg(sk), color: '#161310' }}>
+                                    {sk}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {app.coverLetter && (
+                            <div>
+                              <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.14em] text-[#3B342B]/40 block mb-2">Cover letter</span>
+                              <p className="text-[#3B342B] text-[14px] leading-relaxed bg-[#E4D9C4] rounded-xl px-4 py-3 border border-[#16131010]">
+                                {app.coverLetter}
+                              </p>
+                            </div>
+                          )}
+                          {!app.coverLetter && (
+                            <p className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-wider text-[#3B342B]/30">
+                              // no cover letter submitted
+                            </p>
                           )}
                         </div>
                       )}
-                      {actionErrors[app._id] && (
-                        <p className="text-[12px] mt-1" style={{ color: '#8A3A10' }}>
-                          {actionErrors[app._id]}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* time */}
-                    <span className="font-['JetBrains_Mono'] text-[9.5px] uppercase tracking-[.09em] hidden sm:block flex-shrink-0"
-                      style={{ color: 'rgba(59,52,43,.4)' }}>
-                      // {timeAgo(app.appliedAt || app.createdAt)}
-                    </span>
-
-                    {/* status badge */}
-                    <span className="font-['JetBrains_Mono'] text-[9.5px] uppercase tracking-[.1em] px-2.5 py-1 rounded-full font-semibold flex-shrink-0"
-                      style={{ background: status.bg, color: status.color }}>
-                      {STATUS_OPTIONS.find(o => o.v === app.status)?.l ?? app.status}
-                    </span>
-
-                    {/* status dropdown */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <select
-                        value={app.status}
-                        onChange={e => handleStatusChange(app._id, e.target.value)}
-                        disabled={!!updating[app._id]}
-                        className="rounded-full px-4 py-1.5 text-[12px] font-semibold cursor-pointer focus:outline-none disabled:opacity-50"
-                        style={{ background: '#EEE7D3', border: '1.5px solid rgba(47,74,46,.2)', color: '#2F4A2E' }}
-                      >
-                        {STATUS_OPTIONS.map(s => (
-                          <option key={s.v} value={s.v}>{s.l}</option>
-                        ))}
-                      </select>
-                      {updating[app._id] && <Spinner size="sm" />}
-                    </div>
-
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
+      </div>
 
-      </main>
       <Footer />
     </div>
   )
