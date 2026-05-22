@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
 export default function ResetPasswordPage() {

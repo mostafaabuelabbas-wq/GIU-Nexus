@@ -35,6 +35,7 @@ export default function CreateJobPage() {
       } catch { /* keep polling */ }
     }, 3000)
     return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createdJob?._id, createdJob?.category])
 
   const handleChange = (e) => { setFormData(p => ({ ...p, [e.target.name]: e.target.value })); setError('') }

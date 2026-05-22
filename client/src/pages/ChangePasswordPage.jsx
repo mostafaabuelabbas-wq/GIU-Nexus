@@ -8,17 +8,25 @@ import Spinner from '../components/Spinner'
 export default function ChangePasswordPage() {
   const navigate = useNavigate()
   const [form,    setForm]    = useState({ currentPassword: '', newPassword: '', confirm: '' })
-  const [showPw,  setShowPw]  = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState('')
-  const [success, setSuccess] = useState(false)
+  const [showPw,      setShowPw]      = useState(false)
+  const [loading,     setLoading]     = useState(false)
+  const [error,       setError]       = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [success,     setSuccess]     = useState(false)
 
-  const onChange = (e) => { setForm(p => ({ ...p, [e.target.name]: e.target.value })); setError('') }
+  const onChange = (e) => {
+    setForm(p => ({ ...p, [e.target.name]: e.target.value }))
+    setError('')
+    setFieldErrors(p => ({ ...p, [e.target.name]: '' }))
+  }
 
   const onSubmit = async (e) => {
     e.preventDefault()
-    if (form.newPassword !== form.confirm) { setError('New passwords do not match.'); return }
-    if (form.newPassword.length < 8)       { setError('New password must be at least 8 characters.'); return }
+    const fe = {}
+    if (!form.currentPassword)                         fe.currentPassword = 'Required.'
+    if (form.newPassword.length < 8)                   fe.newPassword     = 'Must be at least 8 characters.'
+    if (form.newPassword !== form.confirm)             fe.confirm         = 'Passwords do not match.'
+    if (Object.keys(fe).length) { setFieldErrors(fe); return }
     setLoading(true)
     try {
       await api.patch('/profile/change-password', {
@@ -119,7 +127,7 @@ export default function ChangePasswordPage() {
                     onChange={onChange}
                     placeholder={f.ph}
                     required
-                    className={`${inputCls} ${f.showToggle ? 'pr-20' : ''}`}
+                    className={`${inputCls} ${f.showToggle ? 'pr-20' : ''} ${fieldErrors[f.name] ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
                   />
                   {f.showToggle && (
                     <button type="button" onClick={() => setShowPw(p => !p)}
@@ -128,6 +136,9 @@ export default function ChangePasswordPage() {
                     </button>
                   )}
                 </div>
+                {fieldErrors[f.name] && (
+                  <p className="mt-1.5 text-[12px] text-red-600 font-['JetBrains_Mono']">{fieldErrors[f.name]}</p>
+                )}
               </div>
             ))}
 

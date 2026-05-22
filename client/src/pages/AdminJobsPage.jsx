@@ -27,7 +27,6 @@ export default function AdminJobsPage() {
 
   useEffect(() => {
     let active = true
-    setLoading(true); setError('')
     const params = { page, limit: LIMIT }
     if (keyword) params.keyword = keyword
     api.get('/jobs', { params })
@@ -35,6 +34,7 @@ export default function AdminJobsPage() {
         if (!active) return
         setJobs(unwrap(data))
         setTotal(data?.total ?? unwrap(data).length)
+        setError('')
       })
       .catch(err => { if (active) setError(err.response?.data?.message || 'Failed to load jobs.') })
       .finally(() => { if (active) setLoading(false) })
@@ -42,8 +42,8 @@ export default function AdminJobsPage() {
   }, [keyword, page, retryKey])
 
   const totalPages  = Math.max(1, Math.ceil(total / LIMIT))
-  const handleSearch = (e) => { e.preventDefault(); setKeyword(draftKw); setPage(1) }
-  const clearSearch  = () => { setKeyword(''); setDraftKw(''); setPage(1) }
+  const handleSearch = (e) => { e.preventDefault(); setLoading(true); setKeyword(draftKw); setPage(1) }
+  const clearSearch  = () => { setLoading(true); setKeyword(''); setDraftKw(''); setPage(1) }
 
   const handleDelete = async () => {
     setDeleting(true); setDeleteError('')
@@ -105,7 +105,7 @@ export default function AdminJobsPage() {
         {error && (
           <div className="mb-4 p-4 bg-[#FEE2E2] border border-red-200 rounded-2xl text-red-700 text-sm">
             {error}
-            <button onClick={() => setRetryKey(k => k + 1)} className="ml-3 font-bold underline">Retry</button>
+            <button onClick={() => { setLoading(true); setRetryKey(k => k + 1) }} className="ml-3 font-bold underline">Retry</button>
           </div>
         )}
 
@@ -174,15 +174,15 @@ export default function AdminJobsPage() {
 
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-8">
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                <button onClick={() => { setLoading(true); setPage(p => Math.max(1, p - 1)) }} disabled={page === 1}
                   className="w-10 h-10 rounded-full bg-[#EDE4D0] border border-[#16131012] flex items-center justify-center hover:bg-[#D8CEBA] transition-colors disabled:opacity-30">←</button>
                 {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map(p => (
-                  <button key={p} onClick={() => setPage(p)}
+                  <button key={p} onClick={() => { setLoading(true); setPage(p) }}
                     className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${page === p ? 'bg-[#2F4A2E] text-[#F1EAD9]' : 'bg-[#EDE4D0] border border-[#16131012] text-[#161310] hover:bg-[#D8CEBA]'}`}>
                     {p}
                   </button>
                 ))}
-                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                <button onClick={() => { setLoading(true); setPage(p => Math.min(totalPages, p + 1)) }} disabled={page === totalPages}
                   className="w-10 h-10 rounded-full bg-[#EDE4D0] border border-[#16131012] flex items-center justify-center hover:bg-[#D8CEBA] transition-colors disabled:opacity-30">→</button>
               </div>
             )}

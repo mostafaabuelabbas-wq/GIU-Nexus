@@ -41,17 +41,18 @@ export default function RecruiterDashboard() {
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState('')
   const [deleteId,  setDeleteId]  = useState(null)
+  const [retryKey,  setRetryKey]  = useState(0)
   const [deleting,  setDeleting]  = useState(false)
 
   const isPending = user?.status === 'pending'
 
-  const load = () => {
-    setLoading(true); setError('')
+  useEffect(() => {
+    let active = true
     api.get('/jobs/my-jobs')
-      .then(({ data }) => { setJobs(unwrap(data)); setLoading(false) })
-      .catch(err => { setError(err.response?.data?.message || 'Failed to load your jobs.'); setLoading(false) })
-  }
-  useEffect(() => { load() }, [])
+      .then(({ data }) => { if (active) { setJobs(unwrap(data)); setError(''); setLoading(false) } })
+      .catch(err => { if (active) { setError(err.response?.data?.message || 'Failed to load your jobs.'); setLoading(false) } })
+    return () => { active = false }
+  }, [retryKey])
 
   const totalApplicants = jobs.reduce((s, j) => s + (j.applicantCount ?? j.applications?.length ?? 0), 0)
   const openJobs   = jobs.filter(j => j.status === 'open').length
@@ -162,7 +163,7 @@ export default function RecruiterDashboard() {
             <span className="font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#3B342B]/40 block mb-3">// error</span>
             <h3 className="font-['Space_Grotesk'] font-bold text-2xl text-[#161310] mb-2">Couldn't load your jobs.</h3>
             <p className="text-[#3B342B] mb-6">{error}</p>
-            <button onClick={load} className="bg-[#161310] text-[#F1EAD9] font-bold px-6 py-3 rounded-full hover:bg-black transition-colors">
+            <button onClick={() => { setLoading(true); setError(''); setRetryKey(k => k + 1) }} className="bg-[#161310] text-[#F1EAD9] font-bold px-6 py-3 rounded-full hover:bg-black transition-colors">
               Try again →
             </button>
           </div>

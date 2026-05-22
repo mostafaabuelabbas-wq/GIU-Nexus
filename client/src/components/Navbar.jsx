@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext'
 
 const cx = (...c) => c.filter(Boolean).join(' ')
 
-// ── Three-dot brand logo ─────────────────────────────────────────────────
 function BrandMark() {
   return (
     <span className="flex items-center gap-[5px] flex-shrink-0">
@@ -17,12 +16,16 @@ function BrandMark() {
 
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth()
-  const navigate  = useNavigate()
-  const location  = useLocation()
-  const menuRef = useRef(null)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const navigate      = useNavigate()
+  const location      = useLocation()
+  const menuRef       = useRef(null)
+  const [menuOpen,   setMenuOpen]   = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const closeMobile = () => setMobileOpen(false)
 
   const scrollToSection = (id) => {
+    setMobileOpen(false)
     if (location.pathname === '/') {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
     } else {
@@ -38,22 +41,26 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', fn)
   }, [menuOpen])
 
-
   const role      = user?.role
   const isPending = role === 'recruiter' && user?.status === 'pending'
   const initials  = (user?.name || '?').split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase()
 
-  const handleLogout = () => { setMenuOpen(false); logout(); navigate('/login') }
+  const handleLogout = () => { setMenuOpen(false); setMobileOpen(false); logout(); navigate('/login') }
 
   const isJobsActive = location.pathname.startsWith('/jobs')
 
-  // Nav link: plain text, active = dark green pill, hover = lift
   const linkCls = ({ isActive }) => cx(
     "nav-link font-['Space_Grotesk'] font-bold text-[16px] px-5 py-2.5 rounded-full no-underline inline-block",
     "transition-all duration-200 ease-out",
     isActive
       ? "bg-[#2F4A2E] text-[#F1EAD9] shadow-[0_4px_14px_-4px_rgba(47,74,46,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_22px_-6px_rgba(47,74,46,0.55)]"
       : "text-[#161310] hover:bg-[#EEE7D3] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_-6px_rgba(47,74,46,0.3)]"
+  )
+
+  // Mobile link style — full width, stacked
+  const mobileLinkCls = ({ isActive }) => cx(
+    "font-['Space_Grotesk'] font-bold text-[16px] px-4 py-3 rounded-xl no-underline block w-full transition-colors",
+    isActive ? "bg-[#2F4A2E] text-[#F1EAD9]" : "text-[#161310] hover:bg-[#EEE7D3]"
   )
 
   return (
@@ -68,20 +75,20 @@ export default function Navbar() {
             <span className="hidden sm:inline font-['Cairo'] text-[19px] font-bold text-[#161310]/55 leading-none" lang="ar">جيو نكسس</span>
           </Link>
 
-          {/* ── Nav links (centered) ── */}
-          <ul className="flex items-center gap-2 list-none m-0 p-0 ml-6">
+          {/* ── Desktop nav links ── */}
+          <ul className="hidden md:flex items-center gap-2 list-none m-0 p-0 ml-6">
             {!isAuthenticated && (
               <>
                 <li><NavLink to="/jobs" className={linkCls}>Jobs</NavLink></li>
                 <li>
                   <button type="button" onClick={() => scrollToSection('manifesto')}
-                    className="font-['Space_Grotesk'] font-bold text-[16px] px-5 py-2.5 rounded-full text-[#161310] hover:bg-[#161310]/8 hover:-translate-y-0.5 transition-all duration-200 ease-out bg-transparent border-0 cursor-pointer hidden md:block">
+                    className="font-['Space_Grotesk'] font-bold text-[16px] px-5 py-2.5 rounded-full text-[#161310] hover:bg-[#EEE7D3] hover:-translate-y-0.5 transition-all duration-200 ease-out bg-transparent border-0 cursor-pointer hidden md:block">
                     Manifesto
                   </button>
                 </li>
                 <li>
                   <button type="button" onClick={() => scrollToSection('how-it-works')}
-                    className="font-['Space_Grotesk'] font-bold text-[16px] px-5 py-2.5 rounded-full text-[#161310] hover:bg-[#161310]/8 hover:-translate-y-0.5 transition-all duration-200 ease-out bg-transparent border-0 cursor-pointer hidden md:block">
+                    className="font-['Space_Grotesk'] font-bold text-[16px] px-5 py-2.5 rounded-full text-[#161310] hover:bg-[#EEE7D3] hover:-translate-y-0.5 transition-all duration-200 ease-out bg-transparent border-0 cursor-pointer hidden md:block">
                     How it works
                   </button>
                 </li>
@@ -122,8 +129,8 @@ export default function Navbar() {
 
           <div className="flex-1" />
 
-          {/* ── Right side ── */}
-          <div className="flex items-center gap-3 flex-shrink-0" ref={menuRef}>
+          {/* ── Desktop right side ── */}
+          <div className="hidden md:flex items-center gap-3 flex-shrink-0" ref={menuRef}>
             {!isAuthenticated ? (
               <>
                 <Link to="/login"
@@ -137,7 +144,6 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                {/* ── Bell (outlined circle) ── */}
                 <button type="button" aria-label="Notifications"
                   className="relative w-11 h-11 rounded-full flex items-center justify-center text-[#161310] border-2 border-[#16131025] hover:border-[#161310] bg-transparent cursor-pointer transition-colors">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -147,14 +153,13 @@ export default function Navbar() {
                   <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full bg-[#EE5688]" />
                 </button>
 
-                {/* ── User pill (outlined oval) ── */}
                 <div className="relative">
                   <button type="button" onClick={() => setMenuOpen(o => !o)}
                     className="flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 rounded-full border-2 border-[#16131025] hover:border-[#161310] bg-transparent cursor-pointer transition-colors">
                     <div className="w-8 h-8 rounded-full bg-[#E5A93A] text-[#161310] font-['Space_Grotesk'] font-bold text-[12px] flex items-center justify-center flex-shrink-0">
                       {initials}
                     </div>
-                    <div className="hidden md:flex flex-col items-start leading-none gap-1">
+                    <div className="flex flex-col items-start leading-none gap-1">
                       <span className="font-['Space_Grotesk'] font-bold text-[14px] text-[#161310]">{user?.name}</span>
                       <span className="font-['JetBrains_Mono'] text-[9.5px] text-[#3B342B]/55 uppercase tracking-[0.1em]">// {role === 'jobSeeker' ? 'JOBSEEKER' : role?.toUpperCase()}</span>
                     </div>
@@ -174,7 +179,6 @@ export default function Navbar() {
                   )}
                 </div>
 
-                {/* ── Sign out (outlined pill) ── */}
                 <button type="button" onClick={handleLogout}
                   className="font-['Space_Grotesk'] font-semibold text-[15px] px-5 py-2.5 rounded-full text-[#161310] border-2 border-[#16131025] hover:border-[#161310] bg-transparent cursor-pointer transition-colors">
                   Sign out
@@ -183,7 +187,96 @@ export default function Navbar() {
             )}
           </div>
 
+          {/* ── Hamburger (mobile only) ── */}
+          <button
+            type="button"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMobileOpen(o => !o)}
+            className="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-[5px] bg-transparent border-0 cursor-pointer flex-shrink-0 rounded-xl hover:bg-[#EEE7D3] transition-colors"
+          >
+            <span className={cx("w-5 h-[2px] bg-[#161310] rounded-full transition-all duration-200", mobileOpen && "rotate-45 translate-y-[7px]")} />
+            <span className={cx("w-5 h-[2px] bg-[#161310] rounded-full transition-all duration-200", mobileOpen && "opacity-0")} />
+            <span className={cx("w-5 h-[2px] bg-[#161310] rounded-full transition-all duration-200", mobileOpen && "-rotate-45 -translate-y-[7px]")} />
+          </button>
+
         </nav>
+
+        {/* ── Mobile drawer ── */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-[#16131015] bg-[#F1EAD9]/98 px-6 py-4 flex flex-col gap-1">
+            {!isAuthenticated && (
+              <>
+                <NavLink to="/jobs" className={mobileLinkCls}>Jobs</NavLink>
+                <button type="button" onClick={() => scrollToSection('manifesto')}
+                  className="font-['Space_Grotesk'] font-bold text-[16px] px-4 py-3 rounded-xl text-[#161310] hover:bg-[#EEE7D3] transition-colors bg-transparent border-0 cursor-pointer text-left w-full">
+                  Manifesto
+                </button>
+                <button type="button" onClick={() => scrollToSection('how-it-works')}
+                  className="font-['Space_Grotesk'] font-bold text-[16px] px-4 py-3 rounded-xl text-[#161310] hover:bg-[#EEE7D3] transition-colors bg-transparent border-0 cursor-pointer text-left w-full">
+                  How it works
+                </button>
+                <div className="border-t border-[#16131010] my-2" />
+                <Link to="/login" onClick={closeMobile}
+                  className="font-['Space_Grotesk'] font-semibold text-[15px] px-4 py-3 rounded-xl text-[#161310] hover:bg-[#EEE7D3] transition-colors no-underline block">
+                  Sign in
+                </Link>
+                <Link to="/register" onClick={closeMobile}
+                  className="font-['Space_Grotesk'] font-semibold text-[15px] px-4 py-3 rounded-xl bg-[#EE5688] text-white hover:bg-[#e9437a] transition-colors no-underline block text-center">
+                  Join Nexus →
+                </Link>
+              </>
+            )}
+
+            {role === 'jobSeeker' && (
+              <>
+                <NavLink to="/jobs" end className={mobileLinkCls} onClick={closeMobile}>Browse jobs</NavLink>
+                <NavLink to="/jobs/recommended" className={mobileLinkCls} onClick={closeMobile}>Recommended</NavLink>
+                <NavLink to="/jobs/saved" className={mobileLinkCls} onClick={closeMobile}>Saved</NavLink>
+                <NavLink to="/applications/my" className={mobileLinkCls} onClick={closeMobile}>Applications</NavLink>
+              </>
+            )}
+            {role === 'recruiter' && (
+              <>
+                <NavLink to="/recruiter/dashboard" className={mobileLinkCls} onClick={closeMobile}>Dashboard</NavLink>
+                {!isPending && <NavLink to="/recruiter/jobs/create" className={mobileLinkCls} onClick={closeMobile}>Post a role</NavLink>}
+              </>
+            )}
+            {role === 'admin' && (
+              <>
+                <NavLink to="/admin/dashboard" className={mobileLinkCls} onClick={closeMobile}>Dashboard</NavLink>
+                <NavLink to="/admin/users" className={mobileLinkCls} onClick={closeMobile}>Users</NavLink>
+                <NavLink to="/admin/recruiters" className={mobileLinkCls} onClick={closeMobile}>Recruiters</NavLink>
+                <NavLink to="/admin/jobs" className={mobileLinkCls} onClick={closeMobile}>Jobs</NavLink>
+              </>
+            )}
+
+            {isAuthenticated && (
+              <>
+                <div className="border-t border-[#16131010] my-2" />
+                {role === 'jobSeeker' && (
+                  <>
+                    <Link to="/profile" onClick={closeMobile}
+                      className="font-['Space_Grotesk'] text-[15px] px-4 py-3 rounded-xl text-[#161310] hover:bg-[#EEE7D3] transition-colors no-underline block">
+                      My profile
+                    </Link>
+                    <Link to="/profile/edit" onClick={closeMobile}
+                      className="font-['Space_Grotesk'] text-[15px] px-4 py-3 rounded-xl text-[#161310] hover:bg-[#EEE7D3] transition-colors no-underline block">
+                      Edit profile
+                    </Link>
+                  </>
+                )}
+                <Link to="/profile/change-password" onClick={closeMobile}
+                  className="font-['Space_Grotesk'] text-[15px] px-4 py-3 rounded-xl text-[#161310] hover:bg-[#EEE7D3] transition-colors no-underline block">
+                  Change password
+                </Link>
+                <button type="button" onClick={handleLogout}
+                  className="font-['Space_Grotesk'] font-semibold text-[15px] px-4 py-3 rounded-xl text-[#EE5688] hover:bg-[#EEE7D3] transition-colors bg-transparent border-0 cursor-pointer text-left w-full">
+                  Sign out
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Pending recruiter banner */}

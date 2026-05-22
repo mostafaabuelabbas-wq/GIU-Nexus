@@ -40,6 +40,8 @@ export default function EditProfilePage() {
   const onFileChange = (e) => {
     const f = e.target.files?.[0]
     if (!f) return
+    if (f.size > 5 * 1024 * 1024) { setError('Photo must be under 5 MB.'); e.target.value = ''; return }
+    setError('')
     setFile(f)
     setPreviewUrl(URL.createObjectURL(f))
     setRemovePhoto(false)

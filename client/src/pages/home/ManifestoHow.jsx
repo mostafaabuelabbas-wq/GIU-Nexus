@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 
 const SKILL_TAGS = [
   ["React", "sun"],
