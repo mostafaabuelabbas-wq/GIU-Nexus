@@ -68,6 +68,8 @@ export default function ProfilePage() {
   const { user } = useAuth()
   const [profile,      setProfile]      = useState(null)
   const [apps,         setApps]         = useState([])
+  const [appTotal,     setAppTotal]     = useState(0)
+  const [shortlisted,  setShortlisted]  = useState(0)
   const [loading,      setLoading]      = useState(true)
   const [error,        setError]        = useState('')
   const [extracting,   setExtracting]   = useState(false)
@@ -82,8 +84,10 @@ export default function ProfilePage() {
     ]).then(([pRes, aRes]) => {
       if (cancelled) return
       setProfile(pRes.data.user || pRes.data)
-      const list = aRes.data.applications ?? aRes.data ?? []
-      setApps(Array.isArray(list) ? list.slice(0, 3) : [])
+      const list = Array.isArray(aRes.data.applications ?? aRes.data) ? (aRes.data.applications ?? aRes.data) : []
+      setAppTotal(list.length)
+      setShortlisted(list.filter(a => a.status === 'shortlisted').length)
+      setApps(list.slice(0, 3))
       setLoading(false)
     }).catch(err => {
       if (!cancelled) { setError(err.response?.data?.message || 'Failed to load profile.'); setLoading(false) }
@@ -114,8 +118,9 @@ export default function ProfilePage() {
   const skillCount = profile?.skills?.length ?? 0
   const ringOffset = ringReady ? RING_CIRC * (1 - completion / 100) : RING_CIRC
 
-  const animSkills = useCountUp(skillCount, 800, 250)
-  const animApps   = useCountUp(apps.length || 0, 600, 350)
+  const animSkills      = useCountUp(skillCount,  800, 250)
+  const animApps        = useCountUp(appTotal,    600, 350)
+  const animShortlisted = useCountUp(shortlisted, 700, 450)
 
   return (
     <div className="min-h-screen bg-[#F1EAD9] flex flex-col">
@@ -154,6 +159,7 @@ export default function ProfilePage() {
               ringOffset={ringOffset}
               animSkills={animSkills}
               animApps={animApps}
+              animShortlisted={animShortlisted}
             />
             <BioCard profile={profile} />
             <SkillsCard
@@ -176,7 +182,7 @@ export default function ProfilePage() {
 // ─────────────────────────────────────────────────────────────────────────────
 // HERO CARD
 // ─────────────────────────────────────────────────────────────────────────────
-function HeroCard({ profile, name, initial, completion, ringOffset, animSkills, animApps }) {
+function HeroCard({ profile, name, initial, completion, ringOffset, animSkills, animApps, animShortlisted }) {
   const nameParts = name.trim().split(/\s+/)
   const firstName = nameParts[0] || ''
   const lastName  = nameParts.slice(1).join(' ')
@@ -203,7 +209,7 @@ function HeroCard({ profile, name, initial, completion, ringOffset, animSkills, 
           <div className="flex items-center gap-2 flex-wrap mb-4">
             <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[.12em] px-3 py-[5px] rounded-full"
               style={{ border: '1.5px solid rgba(241,234,217,.25)', color: 'rgba(241,234,217,.65)' }}>
-              // Student · جامعة GIU
+              // Jobseeker · جامعة GIU
             </span>
             <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[.12em] flex items-center gap-1.5 px-3 py-[5px] rounded-full"
               style={{ background: 'rgba(126,200,123,.18)', color: '#9DDEA1', border: '1.5px solid rgba(126,200,123,.3)' }}>
@@ -272,9 +278,9 @@ function HeroCard({ profile, name, initial, completion, ringOffset, animSkills, 
         style={{ borderTop: '1.5px solid rgba(241,234,217,.1)' }}>
 
         {[
-          { val: animSkills, label: 'Skills detected', color: '#EE5688' },
-          { val: animApps,   label: 'Applications',    color: '#F1EAD9' },
-          { val: '94%',      label: 'Best match',      color: '#E5A93A' },
+          { val: animSkills,      label: 'Skills detected', color: '#EE5688' },
+          { val: animApps,        label: 'Applications',    color: '#F1EAD9' },
+          { val: animShortlisted, label: 'Shortlisted',     color: '#E5A93A' },
         ].map((s, i) => (
           <div key={i} className="px-6 py-5"
             style={{ borderRight: '1.5px solid rgba(241,234,217,.1)' }}>
@@ -351,21 +357,22 @@ function BioCard({ profile }) {
       </div>
 
       {/* meta chips */}
-      <div className="flex gap-5 flex-wrap mt-5 pt-5 relative z-10"
-        style={{ borderTop: '1.5px solid rgba(229,169,58,.22)' }}>
-        {[
-          { dot: '#2F4A2E', label: 'GIU University' },
-          { dot: '#EE5688', label: 'Computer Science' },
-          { dot: '#E5A93A', label: 'Class of 2026' },
-        ].map(c => (
-          <span key={c.label}
-            className="flex items-center gap-1.5 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[.09em]"
-            style={{ color: '#5C5247' }}>
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: c.dot }} />
-            {c.label}
-          </span>
-        ))}
-      </div>
+      {(profile.university || profile.major) && (
+        <div className="flex gap-5 flex-wrap mt-5 pt-5 relative z-10"
+          style={{ borderTop: '1.5px solid rgba(229,169,58,.22)' }}>
+          {[
+            profile.university && { dot: '#2F4A2E', label: profile.university },
+            profile.major      && { dot: '#EE5688', label: profile.major },
+          ].filter(Boolean).map(c => (
+            <span key={c.label}
+              className="flex items-center gap-1.5 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[.09em]"
+              style={{ color: '#5C5247' }}>
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: c.dot }} />
+              {c.label}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

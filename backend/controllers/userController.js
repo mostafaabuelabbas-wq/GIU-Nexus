@@ -139,6 +139,7 @@ const getAdminStats = async (req, res, next) => {
                     applicationCount: 1,
                     title: "$jobDetails.title",
                     company: "$jobDetails.company",
+                    category: "$jobDetails.category",
                 },
             },
         ]);
