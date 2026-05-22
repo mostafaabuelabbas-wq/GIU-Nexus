@@ -39,9 +39,8 @@ export default function Footer() {
   ]
 
   const employerLinks = [
-    { label: 'Post a role',     href: isRecruiter ? '/recruiter/jobs/create' : '/register?role=recruiter' },
-    { label: 'Recruiter login', href: '/login' },
-    { label: 'Book a demo',     href: 'mailto:hello@giu-nexus.eg' },
+    { label: 'Post a role', href: isRecruiter ? '/recruiter/jobs/create' : '/register?role=recruiter' },
+    { label: 'Dashboard',   href: isRecruiter ? '/recruiter/dashboard' : '/login' },
   ]
 
   const projectLinks = [
@@ -56,7 +55,7 @@ export default function Footer() {
       <div className="max-w-[1360px] mx-auto px-10 pt-20 pb-10">
 
         {/* ── Top: brand block + 3 columns ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] gap-x-12 gap-y-14">
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-14 ${(isRecruiter || isJobSeeker) ? 'lg:grid-cols-[1.5fr_1fr_1fr]' : 'lg:grid-cols-[1.5fr_1fr_1fr_1fr]'}`}>
 
           {/* Brand block — compact, professional */}
           <div className="min-w-0 max-w-[360px]">
@@ -81,9 +80,9 @@ export default function Footer() {
             </p>
           </div>
 
-          <FooterCol title="For students"  links={studentLinks} />
-          <FooterCol title="For employers" links={employerLinks} />
-          <FooterCol title="The project"   links={projectLinks} />
+          {!isRecruiter && <FooterCol title="For jobseekers" links={studentLinks} />}
+          {!isJobSeeker  && <FooterCol title="For employers"  links={employerLinks} />}
+          <FooterCol title="The project" links={projectLinks} />
         </div>
 
         {/* ── Bottom row ── */}

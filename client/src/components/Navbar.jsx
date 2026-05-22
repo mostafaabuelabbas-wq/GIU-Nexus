@@ -19,7 +19,7 @@ export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth()
   const navigate  = useNavigate()
   const location  = useLocation()
-  const menuRef   = useRef(null)
+  const menuRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
   const scrollToSection = (id) => {
@@ -38,19 +38,22 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', fn)
   }, [menuOpen])
 
+
   const role      = user?.role
   const isPending = role === 'recruiter' && user?.status === 'pending'
   const initials  = (user?.name || '?').split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase()
 
   const handleLogout = () => { setMenuOpen(false); logout(); navigate('/login') }
 
+  const isJobsActive = location.pathname.startsWith('/jobs')
+
   // Nav link: plain text, active = dark green pill, hover = lift
   const linkCls = ({ isActive }) => cx(
     "nav-link font-['Space_Grotesk'] font-bold text-[16px] px-5 py-2.5 rounded-full no-underline inline-block",
     "transition-all duration-200 ease-out",
     isActive
-      ? "bg-[#2F4A2E] text-[#F1EAD9] shadow-[0_4px_14px_-4px_rgba(47,74,46,0.4)] hover:-translate-y-0.5"
-      : "text-[#161310] hover:bg-[#161310]/8 hover:-translate-y-0.5"
+      ? "bg-[#2F4A2E] text-[#F1EAD9] shadow-[0_4px_14px_-4px_rgba(47,74,46,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_22px_-6px_rgba(47,74,46,0.55)]"
+      : "text-[#161310] hover:bg-[#EEE7D3] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_-6px_rgba(47,74,46,0.3)]"
   )
 
   return (
@@ -69,7 +72,6 @@ export default function Navbar() {
           <ul className="flex items-center gap-2 list-none m-0 p-0 ml-6">
             {!isAuthenticated && (
               <>
-                <li><NavLink to="/" end className={linkCls}>Home</NavLink></li>
                 <li><NavLink to="/jobs" className={linkCls}>Jobs</NavLink></li>
                 <li>
                   <button type="button" onClick={() => scrollToSection('manifesto')}
@@ -87,16 +89,23 @@ export default function Navbar() {
             )}
             {role === 'jobSeeker' && (
               <>
-                <li><NavLink to="/" end className={linkCls}>Home</NavLink></li>
-                <li><NavLink to="/jobs" className={linkCls}>Jobs</NavLink></li>
-                <li className="hidden md:block"><NavLink to="/jobs/recommended" className={linkCls}>Recommended</NavLink></li>
-                <li className="hidden md:block"><NavLink to="/jobs/saved" className={linkCls}>Saved</NavLink></li>
-                <li className="hidden lg:block"><NavLink to="/applications/my" className={linkCls}>Applications</NavLink></li>
+                <li className="group flex items-center">
+                  <NavLink to="/jobs" end className={linkCls}>Jobs</NavLink>
+                  <div className={cx(
+                    "flex items-center gap-2 overflow-hidden transition-all duration-300 ease-out",
+                    "group-hover:max-w-[500px] group-hover:opacity-100 group-hover:ml-2",
+                    "group-focus-within:max-w-[500px] group-focus-within:opacity-100 group-focus-within:ml-2",
+                    isJobsActive ? "max-w-[500px] opacity-100 ml-2" : "max-w-0 opacity-0"
+                  )}>
+                    <NavLink to="/jobs/recommended" className={linkCls}>Recommended</NavLink>
+                    <NavLink to="/jobs/saved" className={linkCls}>Saved</NavLink>
+                  </div>
+                </li>
+                <li><NavLink to="/applications/my" className={linkCls}>Applications</NavLink></li>
               </>
             )}
             {role === 'recruiter' && (
               <>
-                <li><NavLink to="/" end className={linkCls}>Home</NavLink></li>
                 <li><NavLink to="/recruiter/dashboard" className={linkCls}>Dashboard</NavLink></li>
                 {!isPending && <li><NavLink to="/recruiter/jobs/create" className={linkCls}>Post a role</NavLink></li>}
               </>
@@ -152,15 +161,15 @@ export default function Navbar() {
                   </button>
 
                   {menuOpen && (
-                    <div className="absolute top-[calc(100%+10px)] right-0 bg-white rounded-[18px] shadow-[0_24px_50px_-16px_rgba(0,0,0,0.22)] min-w-[200px] p-2 flex flex-col z-[70] border border-[#16131008]">
+                    <div className="absolute top-[calc(100%+10px)] right-0 bg-[#EEE7D3] rounded-[18px] shadow-[0_24px_50px_-16px_rgba(0,0,0,0.22)] min-w-[200px] p-2 flex flex-col z-[70] border border-[#2F4A2E]/15">
                       {role === 'jobSeeker' && <>
-                        <Link to="/profile" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-[10px] text-sm text-[#161310] hover:bg-[#F1EAD9] transition-colors no-underline">My profile</Link>
-                        <Link to="/profile/edit" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-[10px] text-sm text-[#161310] hover:bg-[#F1EAD9] transition-colors no-underline">Edit profile</Link>
+                        <Link to="/profile" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-[10px] text-sm text-[#161310] hover:bg-[#F1EAD9]/70 hover:shadow-[0_4px_12px_-4px_rgba(47,74,46,0.25)] transition-all no-underline">My profile</Link>
+                        <Link to="/profile/edit" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-[10px] text-sm text-[#161310] hover:bg-[#F1EAD9]/70 hover:shadow-[0_4px_12px_-4px_rgba(47,74,46,0.25)] transition-all no-underline">Edit profile</Link>
                       </>}
                       {role === 'recruiter' && (
-                        <Link to="/recruiter/dashboard" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-[10px] text-sm text-[#161310] hover:bg-[#F1EAD9] transition-colors no-underline">My dashboard</Link>
+                        <Link to="/recruiter/dashboard" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-[10px] text-sm text-[#161310] hover:bg-[#F1EAD9]/70 hover:shadow-[0_4px_12px_-4px_rgba(47,74,46,0.25)] transition-all no-underline">My dashboard</Link>
                       )}
-                      <Link to="/profile/change-password" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-[10px] text-sm text-[#161310] hover:bg-[#F1EAD9] transition-colors no-underline">Change password</Link>
+                      <Link to="/profile/change-password" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-[10px] text-sm text-[#161310] hover:bg-[#F1EAD9]/70 hover:shadow-[0_4px_12px_-4px_rgba(47,74,46,0.25)] transition-all no-underline">Change password</Link>
                     </div>
                   )}
                 </div>

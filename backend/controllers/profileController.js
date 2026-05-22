@@ -94,99 +94,51 @@ exports.extractSkills = async (req, res, next) => {
       });
     }
 
-// Maps lowercase bio text → canonical display name.
-// Sorted longest-first so "tailwind css" matches before "tailwind",
-// "node.js" before "node", etc.
-const TECH_DISPLAY = Object.entries({
-  "react native": "React Native",
-  "tailwind css": "Tailwind CSS",
-  "rest apis": "REST APIs",
-  "rest api": "REST API",
-  "node.js": "Node.js",
-  "next.js": "Next.js",
-  "vue.js": "Vue.js",
-  "scikit-learn": "Scikit-learn",
-  "mongodb": "MongoDB",
-  "postgresql": "PostgreSQL",
-  "typescript": "TypeScript",
-  "javascript": "JavaScript",
-  "tensorflow": "TensorFlow",
-  "pytorch": "PyTorch",
-  "graphql": "GraphQL",
-  "tailwind": "Tailwind CSS",
-  "nextjs": "Next.js",
-  "nodejs": "Node.js",
-  "vuejs": "Vue.js",
-  "express": "Express",
-  "angular": "Angular",
-  "svelte": "Svelte",
-  "python": "Python",
-  "django": "Django",
-  "fastapi": "FastAPI",
-  "flutter": "Flutter",
-  "docker": "Docker",
-  "kubernetes": "Kubernetes",
-  "firebase": "Firebase",
-  "supabase": "Supabase",
-  "redis": "Redis",
-  "mysql": "MySQL",
-  "sqlite": "SQLite",
-  "kotlin": "Kotlin",
-  "golang": "Go",
-  "react": "React",
-  "flask": "Flask",
-  "spring": "Spring",
-  "laravel": "Laravel",
-  "swift": "Swift",
-  "scala": "Scala",
-  "pandas": "Pandas",
-  "numpy": "NumPy",
-  "opencv": "OpenCV",
-  "nginx": "Nginx",
-  "kafka": "Kafka",
-  "figma": "Figma",
-  "jest": "Jest",
-  "vite": "Vite",
-  "webpack": "Webpack",
-  "rust": "Rust",
-  "ruby": "Ruby",
-  "azure": "Azure",
-  "linux": "Linux",
-  "html": "HTML",
-  "sass": "Sass",
-  "aws": "AWS",
-  "gcp": "GCP",
-  "git": "Git",
-  "php": "PHP",
-  "css": "CSS",
-  "sql": "SQL",
-  "c++": "C++",
-  "c#": "C#",
-}).sort((a, b) => b[0].length - a[0].length);
+const TECH_SKILLS = [
+  'React', 'React Native', 'Vue.js', 'Angular', 'Next.js', 'Svelte', 'TypeScript', 'JavaScript',
+  'Node.js', 'Express', 'Django', 'FastAPI', 'Flask', 'Spring', 'Laravel', 'Python', 'Go', 'Rust',
+  'Kotlin', 'Swift', 'PHP', 'Ruby', 'Scala', 'C++', 'C#', 'Java',
+  'MongoDB', 'PostgreSQL', 'MySQL', 'SQLite', 'Redis', 'SQL',
+  'Docker', 'Kubernetes', 'AWS', 'Azure', 'GCP', 'Linux', 'Git', 'Nginx', 'Kafka',
+  'TensorFlow', 'PyTorch', 'Scikit-learn', 'Pandas', 'NumPy', 'OpenCV',
+  'GraphQL', 'REST API', 'Firebase', 'Supabase', 'Figma', 'Flutter',
+  'HTML', 'CSS', 'Sass', 'Tailwind CSS', 'Webpack', 'Vite', 'Jest',
+];
 
 // WordPiece tokenization artifacts — never valid skills
 const ARTIFACTS = new Set(["goDB", "oDB", "Mon"]);
 
-function scanBioForSkills(bio) {
+// Zero-shot classify the bio against batches of tech skill candidates.
+// multi_label=true means each skill gets an independent confidence score.
+async function extractSkillsZeroShot(bio) {
+  const BATCH_SIZE = 20;
+  const THRESHOLD = 0.5;
   const found = new Set();
-  for (const [kw, display] of TECH_DISPLAY) {
-    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (new RegExp(`(?<![\\w.])${escaped}(?![\\w.])`, "i").test(bio)) {
-      found.add(display);
-    }
+  for (let i = 0; i < TECH_SKILLS.length; i += BATCH_SIZE) {
+    const batch = TECH_SKILLS.slice(i, i + BATCH_SIZE);
+    const result = await hf.zeroShotClassification({
+      model: 'facebook/bart-large-mnli',
+      inputs: bio,
+      parameters: { candidate_labels: batch, multi_label: true },
+    });
+    const labels = result.labels ?? [];
+    const scores = result.scores ?? [];
+    labels.forEach((label, idx) => {
+      if (scores[idx] >= THRESHOLD) found.add(label);
+    });
   }
   return [...found];
 }
 
-const result = await hf.tokenClassification({
-  model: "dslim/bert-base-NER",
-  inputs: user.bio,
-});
+const [nerResult, zeroShotSkills] = await Promise.all([
+  hf.tokenClassification({ model: 'dslim/bert-base-NER', inputs: user.bio }),
+  extractSkillsZeroShot(user.bio),
+]);
 
 // NER: keep only MISC entities, strip WordPiece prefixes, drop artifacts
 const nerSkills = [
   ...new Set(
-    result
+    nerResult
       .filter((e) => ["MISC", "B-MISC", "I-MISC"].includes(e.entity_group))
       .map((e) => e.word.replace(/^##/, ""))
       .filter((word) =>
@@ -197,11 +149,7 @@ const nerSkills = [
   ),
 ];
 
-// Direct bio scan catches ORG-tagged tech (MongoDB, Node.js, etc.) and
-// multi-word phrases (Tailwind CSS, REST APIs) the NER model misses
-const bioSkills = scanBioForSkills(user.bio);
-
-const skills = [...new Set([...bioSkills, ...nerSkills])];
+const skills = [...new Set([...zeroShotSkills, ...nerSkills])];
 
     // Save extracted skills
     user.skills = skills;

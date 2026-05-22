@@ -1,7 +1,7 @@
 import AdminJobsPage from './pages/AdminJobsPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
 import RoleRoute from './components/RoleRoute'
 import HomePage from './pages/HomePage'
@@ -25,6 +25,13 @@ import ProfilePage from './pages/ProfilePage'
 import EditProfilePage from './pages/EditProfilePage'
 import ScrollToTop from './components/ScrollToTop'
 
+function HomeRoute() {
+  const { user } = useAuth()
+  if (user?.role === 'recruiter') return <Navigate to="/recruiter/dashboard" replace />
+  if (user?.role === 'admin')     return <Navigate to="/admin/dashboard" replace />
+  return <HomePage />
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -33,7 +40,7 @@ function App() {
         <Routes>
 
           {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomeRoute />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />

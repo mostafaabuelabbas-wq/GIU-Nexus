@@ -70,7 +70,8 @@ exports.createJob = async (req, res, next) => {
 
     // Background: classify then update category. Exposed via app.locals so tests
     // can await it deterministically without flaky setTimeouts.
-    const classifyPromise = classifyJobCategory(description)
+    const classifyInput = `${title}\n${description}\nSkills: ${(requirements || []).join(', ')}`;
+    const classifyPromise = classifyJobCategory(classifyInput)
       .then((category) => JobPost.findByIdAndUpdate(job._id, { category }))
       .catch((err) => console.error("Background classification failed:", err.message));
     req.app.locals.pendingJobs = (req.app.locals.pendingJobs || []).concat(classifyPromise);
@@ -195,9 +196,10 @@ exports.updateJob = async (req, res, next) => {
 
     if (descriptionChanged) {
       try {
+        const classifyInput = `${job.title}\n${job.description}\nSkills: ${(job.requirements || []).join(', ')}`;
         const result = await hf.zeroShotClassification({
           model: "facebook/bart-large-mnli",
-          inputs: job.description,
+          inputs: classifyInput,
           parameters: {
             candidate_labels: [
               "Frontend",
