@@ -6,9 +6,9 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import JobCard from '../components/JobCard'
 import { JobCardSkeleton } from '../components/Skeleton'
-import HeroSection from './Home/HeroSection'
-import ManifestoHow from './Home/ManifestoHow'
-import StoriesBottom from './Home/StoriesBottom'
+import HeroSection from './home/HeroSection'
+import ManifestoHow from './home/ManifestoHow'
+import StoriesBottom from './home/StoriesBottom'
 
 const unwrap = (d) => Array.isArray(d) ? d : d?.jobs ?? d?.data ?? d?.results ?? []
 
