@@ -35,6 +35,9 @@ This project is being developed using the MERN stack (MongoDB, Express.js, React
 ### Milestone 2 — Backend Development ✅
 Complete Node.js/Express REST API with JWT authentication, role-based access control, and three HuggingFace AI integrations.
 
+### Milestone 3 — React Frontend ✅
+Full React 18 frontend built with Vite and Tailwind CSS. All 21 pages and shared components integrated with the live backend via axios. Role-based routing, AuthContext global state, and all three AI features visible in the UI (skill chips, category badges, recommended jobs).
+
 ---
 
 ## Tech Stack
@@ -43,7 +46,7 @@ Complete Node.js/Express REST API with JWT authentication, role-based access con
 |-------|------------|
 | Database | MongoDB (via Mongoose) |
 | Backend | Express.js on Node.js |
-| Frontend | React.js (Milestone 3) |
+| Frontend | React 18 (Vite), react-router-dom v6, axios, Tailwind CSS |
 | AI | Hugging Face Inference API |
 | Auth | JSON Web Tokens (JWT) + bcryptjs |
 | Email | Nodemailer |
@@ -51,6 +54,54 @@ Complete Node.js/Express REST API with JWT authentication, role-based access con
 | Testing | Jest + Supertest + mongodb-memory-server |
 | CI/CD | GitHub Actions |
 | Containerisation | Docker + Docker Compose |
+
+---
+
+## Project Structure
+
+    GIU-Nexus/
+    ├── backend/
+    │   ├── config/
+    │   │   ├── db.js
+    │   │   ├── cloudinary.js
+    │   │   └── swagger.js
+    │   ├── controllers/
+    │   │   ├── authController.js
+    │   │   ├── userController.js
+    │   │   ├── jobController.js
+    │   │   ├── applicationController.js
+    │   │   └── profileController.js
+    │   ├── middleware/
+    │   │   ├── auth.js
+    │   │   ├── errorHandler.js
+    │   │   ├── rateLimiter.js
+    │   │   ├── tokenBlacklist.js
+    │   │   └── upload.js
+    │   ├── models/
+    │   │   ├── User.js
+    │   │   ├── JobPost.js
+    │   │   └── Application.js
+    │   ├── routes/
+    │   │   ├── authRoutes.js
+    │   │   ├── userRoutes.js
+    │   │   ├── jobRoutes.js
+    │   │   ├── applicationRoutes.js
+    │   │   └── profileRoutes.js
+    │   ├── services/
+    │   │   ├── hfService.js
+    │   │   └── emailService.js
+    │   ├── tests/
+    │   ├── server.js
+    │   └── package.json
+    └── client/
+        └── src/
+            ├── components/
+            ├── pages/
+            ├── context/
+            ├── services/
+            ├── utils/
+            ├── App.jsx
+            └── main.jsx
 
 ---
 
@@ -62,39 +113,30 @@ Complete Node.js/Express REST API with JWT authentication, role-based access con
 - Hugging Face account (free token)
 - Cloudinary account (free tier)
 
-### Installation
+### Backend
 
-```bash
-# Clone the repository
-git clone https://github.com/mostafaabuelabbas-wq/GIU-Nexus.git
-cd GIU-Nexus/backend
+    git clone https://github.com/mostafaabuelabbas-wq/GIU-Nexus.git
+    cd GIU-Nexus/backend
+    npm install
+    cp .env.example .env
+    npm run dev
 
-# Install dependencies
-npm install
+### Frontend
 
-# Set up environment variables
-cp .env.example .env
-# Fill in your values in .env
-
-# Start development server
-npm run dev
-```
+    cd GIU-Nexus/client
+    npm install
+    npm run dev
 
 ### Using Docker (recommended)
 
-```bash
-# From the root of the repository
-docker compose up --build
-```
+    docker compose up --build
 
 This starts both the Express server (port 5000) and a MongoDB container. No local Node.js or MongoDB installation required.
 
 ### Running Tests
 
-```bash
-cd backend
-npm test
-```
+    cd backend
+    npm test
 
 16/16 tests pass. No real database or Hugging Face API needed.
 
@@ -112,7 +154,6 @@ Interactive documentation: `http://localhost:5000/api-docs`
 | /auth/login | POST | Public |
 | /auth/logout | POST | Private |
 | /auth/forgot-password | POST | Public |
-| /auth/verify-otp | POST | Public |
 | /auth/reset-password/:token | PATCH | Public |
 | /users | GET | Admin |
 | /users/:id/status | PATCH | Admin |
@@ -161,64 +202,37 @@ Interactive documentation: `http://localhost:5000/api-docs`
 ## Environment Variables
 
 Copy `.env.example` to `.env` and fill in your values:
-```
-PORT=5000
-MONGO_URI=mongodb+srv://...
-JWT_SECRET=your-random-secret
-JWT_EXPIRE=7d
-HF_TOKEN=hf_xxxxxxxxxxxx
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your@gmail.com
-EMAIL_PASS=your-app-password
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_SECRET=your-secret
-```
+
+    PORT=5000
+    MONGO_URI=mongodb+srv://...
+    JWT_SECRET=your-random-secret
+    JWT_EXPIRE=7d
+    HF_TOKEN=hf_xxxxxxxxxxxx
+    EMAIL_HOST=smtp.gmail.com
+    EMAIL_PORT=587
+    EMAIL_USER=your@gmail.com
+    EMAIL_PASS=your-app-password
+    CLOUDINARY_CLOUD_NAME=your-cloud-name
+    CLOUDINARY_API_KEY=your-api-key
+    CLOUDINARY_SECRET=your-secret
 
 ⚠️ Never commit your .env file. It is in .gitignore.
-```
-backend/
-├── config/
-│   ├── db.js
-│   ├── cloudinary.js
-│   └── swagger.js
-├── controllers/
-│   ├── authController.js
-│   ├── userController.js
-│   ├── jobController.js
-│   ├── applicationController.js
-│   └── profileController.js
-├── middleware/
-│   ├── auth.js
-│   ├── errorHandler.js
-│   ├── rateLimiter.js
-│   ├── tokenBlacklist.js
-│   └── upload.js
-├── models/
-│   ├── User.js
-│   ├── JobPost.js
-│   └── Application.js
-├── routes/
-│   ├── authRoutes.js
-│   ├── userRoutes.js
-│   ├── jobRoutes.js
-│   ├── applicationRoutes.js
-│   └── profileRoutes.js
-├── services/
-│   ├── hfService.js
-│   └── emailService.js
-├── tests/
-│   ├── auth.test.js
-│   ├── jobs.test.js
-│   ├── profile.test.js
-│   ├── env-setup.js
-│   └── helpers/db.js
-├── app.js
-├── server.js
-├── jest.config.js
-├── .env.example
-└── package.json
-```
+
+---
 
 *Software Engineering — Spring 2026 — German International University — Dr. John Zaki*
+
+---
+
+## Contributors
+
+- [Mostafa Abuelabbas](https://github.com/mostafaabuelabbas-wq/GIU-Nexus/commits?author=mostafaabuelabbas-wq)
+- [Hasan Mahmoud](https://github.com/mostafaabuelabbas-wq/GIU-Nexus/commits?author=hasanmsaeid)
+- [Ziad Moharam](https://github.com/mostafaabuelabbas-wq/GIU-Nexus/commits?author=ziadmoharam16009510)
+- [Mohamed Amr](https://github.com/mostafaabuelabbas-wq/GIU-Nexus/commits?author=mohamadkhallaf)
+- [Ismail Samir](https://github.com/mostafaabuelabbas-wq/GIU-Nexus/commits?author=IsmailSamir1)
+- [Yassin Elazab](https://github.com/mostafaabuelabbas-wq/GIU-Nexus/commits?author=yassinazab05)
+- [Mohamed Hafez](https://github.com/mostafaabuelabbas-wq/GIU-Nexus/commits?author=MohamedHafez16002668)
+- [Abdelrahman Ihab](https://github.com/mostafaabuelabbas-wq/GIU-Nexus/commits?author=AbdelrahmanHussien16006439)
+- [Sarah Ibrahim](https://github.com/mostafaabuelabbas-wq/GIU-Nexus/commits?author=saraheldahaby)
+- [Nour Galal](https://github.com/mostafaabuelabbas-wq/GIU-Nexus/commits?author=nnourgalal)
