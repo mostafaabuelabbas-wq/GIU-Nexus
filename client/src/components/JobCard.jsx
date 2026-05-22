@@ -38,7 +38,7 @@ function CompanyTile({ name = '' }) {
   const letters = name.slice(0, 2)
   return (
     <div
-      className="w-12 h-12 rounded-[10px] flex items-center justify-center text-white font-['Space_Grotesk'] font-bold text-lg flex-shrink-0"
+      className="w-14 h-14 rounded-[12px] flex items-center justify-center text-white font-['Space_Grotesk'] font-bold text-[22px] flex-shrink-0"
       style={{ background: colorFor(name) }}
     >
       <span className="lowercase first-letter:uppercase">{letters}</span>
@@ -82,7 +82,7 @@ function CatBadge({ category }) {
   const style = CATEGORY_STYLES[category] || CATEGORY_STYLES.Other
   return (
     <span
-      className="inline-flex items-center gap-1.5 rounded-full font-['JetBrains_Mono'] font-bold px-3 py-1 text-[10px] uppercase tracking-[0.12em]"
+      className="inline-flex items-center gap-1.5 rounded-full font-['JetBrains_Mono'] font-bold px-3.5 py-1.5 text-[11px] uppercase tracking-[0.12em]"
       style={{ background: style.bg, color: style.text }}
     >
       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: style.dot }} />
@@ -109,7 +109,7 @@ export default function JobCard({ job, score, showSaveButton, variant = 'grid' }
   const posted   = timeAgo(job.createdAt)
 
   return (
-    <article className="bg-[#F5EFE0] rounded-[18px] border border-[#16131035] p-5 flex flex-col gap-3 hover:-translate-y-1 hover:shadow-[0_18px_40px_-20px_rgba(22,19,16,0.35)] transition-all duration-200 ease-out relative overflow-hidden">
+    <article className="bg-[#F5EFE0] rounded-[20px] border border-[#16131035] p-6 flex flex-col gap-4 hover:-translate-y-1 hover:shadow-[0_18px_40px_-20px_rgba(22,19,16,0.35)] transition-all duration-200 ease-out relative overflow-hidden">
 
       {/* ── Top: avatar + match + bookmark ── */}
       <header className="flex items-start justify-between gap-3">
@@ -128,35 +128,35 @@ export default function JobCard({ job, score, showSaveButton, variant = 'grid' }
       </header>
 
       {/* ── Body: title + meta + snippet ── */}
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         <Link
           to={`/jobs/${job._id}`}
-          className="font-['Space_Grotesk'] font-bold text-[19px] text-[#2F4A2E] leading-tight hover:underline line-clamp-2 no-underline"
+          className="font-['Space_Grotesk'] font-bold text-[22px] text-[#2F4A2E] leading-[1.15] tracking-tight hover:underline line-clamp-2 no-underline"
         >
           {job.title}
         </Link>
 
-        <p className="text-[13px] text-[#2F4A2E] leading-relaxed">
+        <p className="text-[14px] text-[#2F4A2E] leading-relaxed">
           {meta.map((item, i) => (
             <span key={i}>
               {i > 0 && <span className="mx-1.5 text-[#2F4A2E]/35">·</span>}
-              <span className={i === 0 ? 'font-semibold' : 'text-[#2F4A2E]/70'}>{item}</span>
+              <span className={i === 0 ? 'font-bold' : 'text-[#2F4A2E]/70 font-medium'}>{item}</span>
             </span>
           ))}
         </p>
 
         {variant === 'grid' && snippet && (
-          <p className="text-[#2F4A2E]/75 text-[13px] leading-relaxed line-clamp-2 mt-1">
+          <p className="text-[#2F4A2E]/80 text-[14px] leading-relaxed line-clamp-2 mt-0.5">
             {snippet}
           </p>
         )}
       </div>
 
       {/* ── Footer: category + posted ── */}
-      <footer className="flex items-center justify-between gap-2 pt-3 mt-auto border-t border-dashed border-[#16131020]">
+      <footer className="flex items-center justify-between gap-2 pt-4 mt-auto border-t border-dashed border-[#16131020]">
         <CatBadge category={job.category} />
         {posted && (
-          <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.12em] text-[#3B342B]/45">
+          <span className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.12em] text-[#3B342B]/50 font-semibold">
             // {posted}
           </span>
         )}
@@ -164,7 +164,7 @@ export default function JobCard({ job, score, showSaveButton, variant = 'grid' }
 
       {/* ── Closed overlay ── */}
       {job.status !== 'open' && (
-        <div className="absolute inset-0 rounded-[18px] bg-[#161310]/5 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 rounded-[20px] bg-[#161310]/5 flex items-center justify-center pointer-events-none">
           <span className="bg-[#161310] text-[#F1EAD9] text-xs font-['JetBrains_Mono'] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full">
             Closed
           </span>

@@ -44,25 +44,25 @@ export default function Navbar() {
 
   const handleLogout = () => { setMenuOpen(false); logout(); navigate('/login') }
 
-  // Nav link: plain text, active = soft green pill, hover = lift
+  // Nav link: plain text, active = dark green pill, hover = lift
   const linkCls = ({ isActive }) => cx(
-    "nav-link font-['Space_Grotesk'] font-semibold text-[15px] px-4 py-2 rounded-full no-underline inline-block",
+    "nav-link font-['Space_Grotesk'] font-bold text-[16px] px-5 py-2.5 rounded-full no-underline inline-block",
     "transition-all duration-200 ease-out",
     isActive
-      ? "bg-[#DCEDDA] text-[#2F4A2E] hover:-translate-y-0.5"
+      ? "bg-[#2F4A2E] text-[#F1EAD9] shadow-[0_4px_14px_-4px_rgba(47,74,46,0.4)] hover:-translate-y-0.5"
       : "text-[#161310] hover:bg-[#161310]/8 hover:-translate-y-0.5"
   )
 
   return (
     <>
       <header className="sticky top-0 z-50 bg-[#F1EAD9]/95 backdrop-blur-md border-b border-[#16131025]">
-        <nav className="max-w-[1480px] mx-auto px-8 py-5 flex items-center gap-6">
+        <nav className="max-w-[1480px] mx-auto px-8 py-6 flex items-center gap-6">
 
           {/* ── Brand ── */}
           <Link to="/" className="flex items-center gap-3 no-underline flex-shrink-0">
             <BrandMark />
-            <span className="font-['Space_Grotesk'] font-bold text-[22px] tracking-tight text-[#161310] lowercase leading-none">giu nexus</span>
-            <span className="hidden sm:inline font-['Cairo'] text-[16px] font-bold text-[#161310]/55 leading-none" lang="ar">جيو نكسس</span>
+            <span className="font-['Space_Grotesk'] font-bold text-[26px] tracking-tight text-[#161310] lowercase leading-none">giu nexus</span>
+            <span className="hidden sm:inline font-['Cairo'] text-[19px] font-bold text-[#161310]/55 leading-none" lang="ar">جيو نكسس</span>
           </Link>
 
           {/* ── Nav links (centered) ── */}
@@ -73,13 +73,13 @@ export default function Navbar() {
                 <li><NavLink to="/jobs" className={linkCls}>Jobs</NavLink></li>
                 <li>
                   <button type="button" onClick={() => scrollToSection('manifesto')}
-                    className="font-['Space_Grotesk'] font-semibold text-[15px] px-4 py-2 rounded-full text-[#161310] hover:bg-[#161310]/8 hover:-translate-y-0.5 transition-all duration-200 ease-out bg-transparent border-0 cursor-pointer hidden md:block">
+                    className="font-['Space_Grotesk'] font-bold text-[16px] px-5 py-2.5 rounded-full text-[#161310] hover:bg-[#161310]/8 hover:-translate-y-0.5 transition-all duration-200 ease-out bg-transparent border-0 cursor-pointer hidden md:block">
                     Manifesto
                   </button>
                 </li>
                 <li>
                   <button type="button" onClick={() => scrollToSection('how-it-works')}
-                    className="font-['Space_Grotesk'] font-semibold text-[15px] px-4 py-2 rounded-full text-[#161310] hover:bg-[#161310]/8 hover:-translate-y-0.5 transition-all duration-200 ease-out bg-transparent border-0 cursor-pointer hidden md:block">
+                    className="font-['Space_Grotesk'] font-bold text-[16px] px-5 py-2.5 rounded-full text-[#161310] hover:bg-[#161310]/8 hover:-translate-y-0.5 transition-all duration-200 ease-out bg-transparent border-0 cursor-pointer hidden md:block">
                     How it works
                   </button>
                 </li>
